@@ -1,21 +1,201 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Triangle</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #111;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>3D Point Viewer</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0b0e14;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+  #info {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    color: #cfd6e4;
+    font-size: 13px;
+    line-height: 1.5;
+    background: rgba(20, 24, 34, 0.6);
+    padding: 8px 12px;
+    border-radius: 8px;
+    pointer-events: none;
+    user-select: none;
+  }
+  canvas {
+    display: block;
+    cursor: grab;
+  }
+  canvas:active {
+    cursor: grabbing;
+  }
+</style>
 </head>
 <body>
-  <svg width="300" height="260" viewBox="0 0 300 260">
-    <polygon points="150,10 290,250 10,250" fill="#4CAF50" />
-  </svg>
+
+<div id="info">Drag to rotate &middot; Scroll to zoom</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+  // ---------------------------------------------------------------
+  // EDIT THIS ARRAY to change which points are displayed.
+  // Each point is [x, y, z].
+  // ---------------------------------------------------------------
+  const POINTS = [
+    [0, 0, 0],
+    [2, 0, 0],
+    [0, 2, 0],
+    [0, 0, 2],
+    [-2, 0, 0],
+    [0, -2, 0],
+    [0, 0, -2],
+    [1.5, 1.5, 1.5],
+    [-1.5, -1.5, -1.5],
+    [1.5, -1.5, 1.5],
+    [-1.5, 1.5, -1.5],
+  ];
+  // ---------------------------------------------------------------
+
+  // Scene setup
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b0e14);
+
+  const camera = new THREE.PerspectiveCamera(
+    60,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  camera.position.set(0, 0, 10);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(window.devicePixelRatio || 1);
+  document.body.appendChild(renderer.domElement);
+
+  // A group holds everything we want to rotate together around the origin
+  const worldGroup = new THREE.Group();
+  scene.add(worldGroup);
+
+  // Axes lines through the origin, so orientation is easy to read
+  const axesHelper = new THREE.AxesHelper(4);
+  worldGroup.add(axesHelper);
+
+  // Light grid on the XZ plane for spatial reference
+  const grid = new THREE.GridHelper(10, 10, 0x334155, 0x1e293b);
+  worldGroup.add(grid);
+
+  // Render each point as a small sphere
+  const pointColor = 0x5ec8ff;
+  const sphereGeo = new THREE.SphereGeometry(0.08, 16, 16);
+  const sphereMat = new THREE.MeshBasicMaterial({ color: pointColor });
+
+  POINTS.forEach(([x, y, z]) => {
+    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+    sphere.position.set(x, y, z);
+    worldGroup.add(sphere);
+  });
+
+  // Also draw the points as a single Points object (a bit brighter/glowy look)
+  const positions = new Float32Array(POINTS.length * 3);
+  POINTS.forEach(([x, y, z], i) => {
+    positions[i * 3] = x;
+    positions[i * 3 + 1] = y;
+    positions[i * 3 + 2] = z;
+  });
+  const pointsGeo = new THREE.BufferGeometry();
+  pointsGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const pointsMat = new THREE.PointsMaterial({
+    color: pointColor,
+    size: 0.15,
+    sizeAttenuation: true,
+  });
+  worldGroup.add(new THREE.Points(pointsGeo, pointsMat));
+
+  // ---------------------------------------------------------------
+  // Mouse-drag rotation around the origin (custom, no OrbitControls dependency)
+  // ---------------------------------------------------------------
+  let isDragging = false;
+  let prevX = 0;
+  let prevY = 0;
+
+  const rotationSpeed = 0.005;
+
+  renderer.domElement.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    prevX = e.clientX;
+    prevY = e.clientY;
+  });
+
+  window.addEventListener("mouseup", () => {
+    isDragging = false;
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - prevX;
+    const dy = e.clientY - prevY;
+    prevX = e.clientX;
+    prevY = e.clientY;
+
+    worldGroup.rotation.y += dx * rotationSpeed;
+    worldGroup.rotation.x += dy * rotationSpeed;
+  });
+
+  // Touch support (single-finger drag)
+  let lastTouchX = 0;
+  let lastTouchY = 0;
+
+  renderer.domElement.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 1) {
+      lastTouchX = e.touches[0].clientX;
+      lastTouchY = e.touches[0].clientY;
+    }
+  });
+
+  renderer.domElement.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 1) {
+      const dx = e.touches[0].clientX - lastTouchX;
+      const dy = e.touches[0].clientY - lastTouchY;
+      lastTouchX = e.touches[0].clientX;
+      lastTouchY = e.touches[0].clientY;
+
+      worldGroup.rotation.y += dx * rotationSpeed;
+      worldGroup.rotation.x += dy * rotationSpeed;
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // Scroll to zoom (move camera along its local z-axis)
+  renderer.domElement.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+      const zoomSpeed = 0.001;
+      const newZ = camera.position.z * (1 + e.deltaY * zoomSpeed);
+      camera.position.z = Math.min(Math.max(newZ, 2), 60);
+    },
+    { passive: false }
+  );
+
+  // Handle window resize
+  window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // Render loop
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+  animate();
+</script>
 </body>
 </html>
