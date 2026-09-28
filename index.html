@@ -14,10 +14,76 @@
     background: #0b0e14;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   }
-  #info {
+  #topCenter {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+  }
+  #topCenter button {
+    background: rgba(20, 24, 34, 0.75);
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #topCenter button:hover:not(:disabled) {
+    background: #1c2434;
+    border-color: #3a4a63;
+  }
+  #topCenter button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  #topLeft {
     position: absolute;
     top: 12px;
     left: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  #settingsBtn {
+    background: rgba(20, 24, 34, 0.75);
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #settingsBtn:hover {
+    background: #1c2434;
+    border-color: #3a4a63;
+  }
+  #settingsPanel {
+    background: rgba(20, 24, 34, 0.85);
+    border: 1px solid #263042;
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #dbe2f0;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 170px;
+  }
+  #settingsPanel.hidden {
+    display: none;
+  }
+  #settingsPanel label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  #info {
     color: #cfd6e4;
     font-size: 13px;
     line-height: 1.5;
@@ -26,6 +92,262 @@
     border-radius: 8px;
     pointer-events: none;
     user-select: none;
+    max-width: 260px;
+  }
+  #menu {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(20, 24, 34, 0.75);
+    border: 1px solid #263042;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 200px;
+  }
+  #menu h3 {
+    margin: 0 0 2px 0;
+    color: #cfd6e4;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+  }
+  #menu button {
+    background: #151b28;
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  #menu button:hover {
+    background: #1c2434;
+    border-color: #3a4a63;
+  }
+  #menu button.active {
+    background: #22406b;
+    border-color: #5ec8ff;
+    color: #ffffff;
+  }
+  #menu button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  #solidSubmenu {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-left: 10px;
+    border-left: 2px solid #263042;
+    margin-left: 4px;
+  }
+  #solidSubmenu.hidden {
+    display: none;
+  }
+  #paintPanel {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(20, 24, 34, 0.75);
+    border: 1px solid #263042;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 150px;
+    z-index: 5;
+  }
+  #paintPanel h3 {
+    margin: 0 0 2px 0;
+    color: #cfd6e4;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+  }
+  #colorInput {
+    width: 100%;
+    height: 34px;
+    padding: 0;
+    border: 1px solid #263042;
+    border-radius: 6px;
+    background: #151b28;
+    cursor: pointer;
+  }
+  #swatches {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  #swatches button {
+    height: 26px;
+    padding: 0;
+    border: 2px solid #263042;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #swatches button.selected {
+    border-color: #ffffff;
+  }
+  #paintPanel .panelBtn {
+    background: #151b28;
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+  }
+  #paintPanel .panelBtn:hover {
+    background: #1c2434;
+    border-color: #3a4a63;
+  }
+  #paintPanel .panelBtn.active {
+    background: #22406b;
+    border-color: #5ec8ff;
+    color: #ffffff;
+  }
+  body.painting canvas,
+  body.painting canvas:active {
+    cursor: crosshair;
+  }
+  #truncPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-left: 10px;
+    border-left: 2px solid #263042;
+    margin-left: 4px;
+  }
+  #truncPanel.hidden {
+    display: none;
+  }
+  #truncLabel {
+    color: #cfd6e4;
+    font-size: 12px;
+  }
+  #truncSlider {
+    width: 100%;
+    margin: 0;
+  }
+  #truncEnds {
+    display: flex;
+    justify-content: space-between;
+    color: #8a94a8;
+    font-size: 11px;
+  }
+  #truncButtons {
+    display: flex;
+    gap: 6px;
+  }
+  #truncButtons button {
+    flex: 1;
+    text-align: center;
+  }
+  .divider {
+    height: 1px;
+    background: #263042;
+    margin: 4px 0;
+  }
+  #topCenter {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+  }
+  #topCenter button {
+    background: rgba(20, 24, 34, 0.75);
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #topCenter button:hover:not(:disabled) {
+    background: #1c2434;
+    border-color: #3a4a63;
+  }
+  #topCenter button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  #modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  #modalOverlay.hidden {
+    display: none;
+  }
+  #modalBox {
+    background: #131722;
+    border: 1px solid #2a3446;
+    border-radius: 12px;
+    padding: 16px;
+    width: min(560px, 90vw);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #modalBox h3 {
+    margin: 0;
+    color: #dbe2f0;
+    font-size: 14px;
+  }
+  #modalTextarea {
+    width: 100%;
+    height: 200px;
+    box-sizing: border-box;
+    resize: vertical;
+    background: #0d1119;
+    color: #b7ffcf;
+    border: 1px solid #263042;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  #modalStatus {
+    color: #9fd3ff;
+    font-size: 12px;
+    min-height: 14px;
+  }
+  #modalButtons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  #modalButtons button {
+    background: #151b28;
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #modalButtons button:hover {
+    background: #1c2434;
+    border-color: #3a4a63;
   }
   canvas {
     display: block;
@@ -38,29 +360,73 @@
 </head>
 <body>
 
-<div id="info">Drag to rotate &middot; Scroll to zoom</div>
+<div id="topCenter">
+  <button id="undoBtn" disabled title="Undo">&#8630; Undo</button>
+  <button id="redoBtn" disabled title="Redo">Redo &#8631;</button>
+</div>
+
+<div id="topLeft">
+  <button id="settingsBtn">&#9881; Settings</button>
+  <div id="settingsPanel" class="hidden">
+    <label><input type="checkbox" id="transparentToggle" checked /> Transparent faces</label>
+  </div>
+  <div id="info">Drag to rotate &middot; Scroll to zoom</div>
+</div>
+
+<div id="paintPanel">
+  <h3>Colors</h3>
+  <input type="color" id="colorInput" value="#e63946" title="Pick a color" />
+  <div id="swatches"></div>
+  <button id="paintToggle" class="panelBtn">Paint faces</button>
+  <button id="resetColorsBtn" class="panelBtn">Reset colors</button>
+</div>
+
+<div id="menu">
+  <h3>Shape</h3>
+  <button id="loadSolidToggle">Load Solid &#9662;</button>
+  <div id="solidSubmenu" class="hidden">
+    <button data-solid="tetrahedron">Tetrahedron</button>
+    <button data-solid="cube">Cube</button>
+    <button data-solid="octahedron">Octahedron</button>
+    <button data-solid="dodecahedron">Dodecahedron</button>
+    <button data-solid="icosahedron">Icosahedron</button>
+  </div>
+
+  <div class="divider"></div>
+  <h3>Actions</h3>
+  <button id="dualBtn" disabled>Switch to Dual</button>
+  <button id="reorderBtn" disabled>Reorder Convex Hull</button>
+  <button id="truncBtn">Truncate</button>
+  <div id="truncPanel" class="hidden">
+    <div id="truncLabel">Truncation: none</div>
+    <input type="range" id="truncSlider" min="0" max="100" value="0" step="1" />
+    <div id="truncEnds"><span>None</span><span>Rectified</span></div>
+    <div id="truncButtons">
+      <button id="truncApply">Apply</button>
+      <button id="truncCancel">Cancel</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <h3>Data</h3>
+  <button id="exportBtn" disabled>Export as Text</button>
+  <button id="importBtn">Import from Text</button>
+</div>
+
+<div id="modalOverlay" class="hidden">
+  <div id="modalBox">
+    <h3 id="modalTitle">Polyhedron</h3>
+    <textarea id="modalTextarea" spellcheck="false"></textarea>
+    <div id="modalStatus"></div>
+    <div id="modalButtons">
+      <button id="modalCancelBtn">Close</button>
+      <button id="modalPrimaryBtn">Copy</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-  // ---------------------------------------------------------------
-  // EDIT THIS ARRAY to change which points are displayed.
-  // Each point is [x, y, z].
-  // ---------------------------------------------------------------
-  const POINTS = [
-    [0, 0, 0],
-    [2, 0, 0],
-    [0, 2, 0],
-    [0, 0, 2],
-    [-2, 0, 0],
-    [0, -2, 0],
-    [0, 0, -2],
-    [1.5, 1.5, 1.5],
-    [-1.5, -1.5, -1.5],
-    [1.5, -1.5, 1.5],
-    [-1.5, 1.5, -1.5],
-  ];
-  // ---------------------------------------------------------------
-
   // Scene setup
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0b0e14);
@@ -78,62 +444,1238 @@
   renderer.setPixelRatio(window.devicePixelRatio || 1);
   document.body.appendChild(renderer.domElement);
 
-  // A group holds everything we want to rotate together around the origin
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+  dirLight.position.set(4, 6, 5);
+  scene.add(dirLight);
+
   const worldGroup = new THREE.Group();
   scene.add(worldGroup);
 
-  // Axes lines through the origin, so orientation is easy to read
-  const axesHelper = new THREE.AxesHelper(4);
-  worldGroup.add(axesHelper);
+  const shapeGroup = new THREE.Group();
+  worldGroup.add(shapeGroup);
 
-  // Light grid on the XZ plane for spatial reference
-  const grid = new THREE.GridHelper(10, 10, 0x334155, 0x1e293b);
-  worldGroup.add(grid);
+  const pointColorHex = 0x5ec8ff;
+  const highlightColorHex = 0xffd166;
+  const faceColorHex = 0x2b6fb8;
+  const sphereGeo = new THREE.SphereGeometry(0.09, 16, 16);
 
-  // Render each point as a small sphere
-  const pointColor = 0x5ec8ff;
-  const sphereGeo = new THREE.SphereGeometry(0.08, 16, 16);
-  const sphereMat = new THREE.MeshBasicMaterial({ color: pointColor });
-
-  POINTS.forEach(([x, y, z]) => {
-    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
-    sphere.position.set(x, y, z);
-    worldGroup.add(sphere);
-  });
-
-  // Also draw the points as a single Points object (a bit brighter/glowy look)
-  const positions = new Float32Array(POINTS.length * 3);
-  POINTS.forEach(([x, y, z], i) => {
-    positions[i * 3] = x;
-    positions[i * 3 + 1] = y;
-    positions[i * 3 + 2] = z;
-  });
-  const pointsGeo = new THREE.BufferGeometry();
-  pointsGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  const pointsMat = new THREE.PointsMaterial({
-    color: pointColor,
-    size: 0.15,
-    sizeAttenuation: true,
-  });
-  worldGroup.add(new THREE.Points(pointsGeo, pointsMat));
+  const settings = { transparent: true };
 
   // ---------------------------------------------------------------
-  // Mouse-drag rotation around the origin (custom, no OrbitControls dependency)
+  // Platonic solid definitions (used only for the five named starting
+  // shapes; once reordered, a shape becomes a general custom polyhedron)
+  // ---------------------------------------------------------------
+  const SOLID_GEOMETRIES = {
+    tetrahedron: () => new THREE.TetrahedronGeometry(2.2),
+    cube: () => new THREE.BoxGeometry(2.6, 2.6, 2.6),
+    octahedron: () => new THREE.OctahedronGeometry(2.2),
+    dodecahedron: () => new THREE.DodecahedronGeometry(1.8),
+    icosahedron: () => new THREE.IcosahedronGeometry(2.1),
+  };
+
+  const DUAL_MAP = {
+    tetrahedron: "tetrahedron",
+    cube: "octahedron",
+    octahedron: "cube",
+    dodecahedron: "icosahedron",
+    icosahedron: "dodecahedron",
+  };
+
+  function roundKey(v) {
+    return v.x.toFixed(4) + "," + v.y.toFixed(4) + "," + v.z.toFixed(4);
+  }
+
+  function uniqueVerticesFromGeometry(geometry) {
+    const posAttr = geometry.attributes.position;
+    const seen = new Set();
+    const verts = [];
+    for (let i = 0; i < posAttr.count; i++) {
+      const x = +posAttr.getX(i).toFixed(4);
+      const y = +posAttr.getY(i).toFixed(4);
+      const z = +posAttr.getZ(i).toFixed(4);
+      const key = x + "," + y + "," + z;
+      if (!seen.has(key)) {
+        seen.add(key);
+        verts.push(new THREE.Vector3(x, y, z));
+      }
+    }
+    return verts;
+  }
+
+  // ---------------------------------------------------------------
+  // Scene state
+  // ---------------------------------------------------------------
+  let currentSolidName = null;   // name of the named solid, or null once custom
+  let currentVerts = [];         // THREE.Vector3[] - vertices of the current shape
+  let currentFacePolygons = null; // index-array[] (n-gon per face) once custom; null = "use SOLID_GEOMETRIES[currentSolidName]() directly"
+  let vertexSpheres = [];        // Mesh[] parallel to currentVerts
+  let faceMeshObjects = [];      // [Mesh, LineSegments] currently shown for faces
+  let mode = "original";         // "original" | "custom" (actively reordering)
+  let pendingFacePolygons = [];  // faces built so far in the current reorder session
+  let selectedIndices = [];      // indices selected for the face currently being built
+  let currentSolidScale = 1;     // scale applied to a named solid's raw geometry to match the previous shape's size
+  let faceColors = [];           // hex string (or null = default) per polygon face of currentFacePolygons
+  let paintColor = "#e63946";    // colour applied when painting a face
+  let painting = false;          // paint mode: clicking a face colours it
+  let dualCentre = null;         // point the last dual was reciprocated about (in current coords); reused so dual-of-dual returns the original shape
+
+  // Centre of a shape's bounding box, and its "size" = the farthest vertex
+  // from that centre. Used to re-centre and re-scale after a dual so the
+  // shape stays the centre of rotation and fills the same amount of view.
+  function boundsCentre(verts) {
+    const min = new THREE.Vector3(Infinity, Infinity, Infinity);
+    const max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
+    verts.forEach((v) => {
+      min.x = Math.min(min.x, v.x); min.y = Math.min(min.y, v.y); min.z = Math.min(min.z, v.z);
+      max.x = Math.max(max.x, v.x); max.y = Math.max(max.y, v.y); max.z = Math.max(max.z, v.z);
+    });
+    return min.add(max).multiplyScalar(0.5);
+  }
+
+  function shapeSize(verts) {
+    if (verts.length === 0) return 0;
+    const c = boundsCentre(verts);
+    let m = 0;
+    verts.forEach((v) => (m = Math.max(m, v.distanceTo(c))));
+    return m;
+  }
+
+  // Average distance of a vertex set from the origin - used as a stand-in
+  // for "how big" a shape is, so we can rescale after an operation to
+  // match the size of whatever shape was displayed before it.
+  function averageRadius(verts) {
+    if (verts.length === 0) return 0;
+    let total = 0;
+    verts.forEach((v) => (total += v.length()));
+    return total / verts.length;
+  }
+
+  function faceMaterial() {
+    return new THREE.MeshPhongMaterial({
+      color: faceColorHex,
+      transparent: settings.transparent,
+      opacity: settings.transparent ? 0.55 : 1.0,
+      side: THREE.DoubleSide,
+      shininess: 40,
+    });
+  }
+
+  function clearFaceMeshObjects() {
+    faceMeshObjects.forEach((obj) => {
+      shapeGroup.remove(obj);
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) obj.material.dispose();
+    });
+    faceMeshObjects = [];
+  }
+
+  function setFaceGeometry(geometry) {
+    clearFaceMeshObjects();
+    if (!geometry || geometry.attributes.position.count === 0) return;
+
+    const material = faceMaterial();
+    if (geometry.attributes.color) {
+      material.vertexColors = true; // per-face colours live in the geometry
+      material.color.setHex(0xffffff);
+    }
+    const mesh = new THREE.Mesh(geometry, material);
+    shapeGroup.add(mesh);
+    faceMeshObjects.push(mesh);
+
+    const edgesGeo = new THREE.EdgesGeometry(geometry);
+    const edges = new THREE.LineSegments(
+      edgesGeo,
+      new THREE.LineBasicMaterial({ color: 0x9fd3ff })
+    );
+    shapeGroup.add(edges);
+    faceMeshObjects.push(edges);
+  }
+
+  function reapplyFaceMaterialSettings() {
+    faceMeshObjects.forEach((obj) => {
+      if (obj.isMesh) {
+        obj.material.transparent = settings.transparent;
+        obj.material.opacity = settings.transparent ? 0.55 : 1.0;
+        obj.material.needsUpdate = true;
+      }
+    });
+  }
+
+  function rebuildVertexSpheres(verts) {
+    vertexSpheres.forEach((s) => {
+      shapeGroup.remove(s);
+      s.geometry.dispose();
+      s.material.dispose();
+    });
+    vertexSpheres = verts.map((v, i) => {
+      const mat = new THREE.MeshBasicMaterial({ color: pointColorHex });
+      const sphere = new THREE.Mesh(sphereGeo, mat);
+      sphere.position.copy(v);
+      sphere.userData.index = i;
+      shapeGroup.add(sphere);
+      return sphere;
+    });
+  }
+
+  function hideAllVertexSpheres() {
+    vertexSpheres.forEach((s) => (s.visible = false));
+  }
+
+  function resetSphereColor(idx) {
+    vertexSpheres[idx].material.color.setHex(pointColorHex);
+  }
+
+  function clearAllSelectionHighlights() {
+    selectedIndices.forEach((idx) => resetSphereColor(idx));
+    selectedIndices = [];
+  }
+
+  // ---------------------------------------------------------------
+  // Face-polygon <-> render-geometry helpers
+  // ---------------------------------------------------------------
+  function polygonToTriangleVerts(vertices, poly) {
+    if (poly.length === 3) {
+      return [[vertices[poly[0]], vertices[poly[1]], vertices[poly[2]]]];
+    }
+    // Fan from the polygon's centroid rather than its first vertex - this
+    // renders sensibly for both convex faces and star/self-intersecting
+    // faces (e.g. pentagrams), which a first-vertex fan would draw wrong.
+    const centroid = new THREE.Vector3();
+    poly.forEach((idx) => centroid.add(vertices[idx]));
+    centroid.divideScalar(poly.length);
+
+    const triangles = [];
+    const n = poly.length;
+    for (let i = 0; i < n; i++) {
+      const a = vertices[poly[i]];
+      const b = vertices[poly[(i + 1) % n]];
+      triangles.push([centroid, a, b]);
+    }
+    return triangles;
+  }
+
+  function geometryFromFacePolygons(vertices, facePolygons, colors) {
+    const triangles = [];
+    const triFace = []; // which polygon face each rendered triangle belongs to
+    facePolygons.forEach((poly, fi) => {
+      if (poly.length < 3) return;
+      polygonToTriangleVerts(vertices, poly).forEach((tri) => {
+        triangles.push(tri);
+        triFace.push(fi);
+      });
+    });
+    if (triangles.length === 0) return null;
+    const positions = new Float32Array(triangles.length * 9);
+    let p = 0;
+    triangles.forEach(([a, b, c]) => {
+      positions[p++] = a.x;
+      positions[p++] = a.y;
+      positions[p++] = a.z;
+      positions[p++] = b.x;
+      positions[p++] = b.y;
+      positions[p++] = b.z;
+      positions[p++] = c.x;
+      positions[p++] = c.y;
+      positions[p++] = c.z;
+    });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    if (colors && colors.some((c) => c)) {
+      const arr = new Float32Array(triangles.length * 9);
+      const tmp = new THREE.Color();
+      triFace.forEach((fi, ti) => {
+        tmp.set(colors[fi] || faceColorHex);
+        for (let k = 0; k < 3; k++) {
+          arr[ti * 9 + k * 3] = tmp.r;
+          arr[ti * 9 + k * 3 + 1] = tmp.g;
+          arr[ti * 9 + k * 3 + 2] = tmp.b;
+        }
+      });
+      geo.setAttribute("color", new THREE.BufferAttribute(arr, 3));
+    }
+    geo.userData.triFace = triFace;
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  function renderCurrentShape() {
+    if (currentFacePolygons) {
+      setFaceGeometry(geometryFromFacePolygons(currentVerts, currentFacePolygons, faceColors));
+    } else if (currentSolidName) {
+      const geometry = SOLID_GEOMETRIES[currentSolidName]();
+      geometry.scale(currentSolidScale, currentSolidScale, currentSolidScale);
+      setFaceGeometry(geometry);
+    } else {
+      setFaceGeometry(null);
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // Coplanarity check (used to restrict which points can join a face
+  // being built together - a face's points must all lie on one plane)
+  // ---------------------------------------------------------------
+  function planeFromThreePoints(a, b, c) {
+    const normal = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a));
+    if (normal.lengthSq() < 1e-8) return null; // collinear - no unique plane yet
+    normal.normalize();
+    return { normal, point: a };
+  }
+
+  function isCoplanar(plane, point, eps = 1e-3) {
+    if (!plane) return true;
+    const d = plane.normal.dot(point.clone().sub(plane.point));
+    return Math.abs(d) < eps;
+  }
+
+  function updateSelectablePoints() {
+    let plane = null;
+    if (selectedIndices.length >= 3) {
+      plane = planeFromThreePoints(
+        currentVerts[selectedIndices[0]],
+        currentVerts[selectedIndices[1]],
+        currentVerts[selectedIndices[2]]
+      );
+    }
+    vertexSpheres.forEach((sphere, idx) => {
+      if (selectedIndices.includes(idx)) {
+        sphere.visible = true;
+        return;
+      }
+      sphere.visible = plane ? isCoplanar(plane, currentVerts[idx]) : true;
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Winding-order normalization. The dual computation's edge-adjacency
+  // walk assumes every face's vertices are listed in a consistent
+  // rotational direction (all "outward", or all "inward") - if some
+  // faces were clicked in the opposite order from their neighbors,
+  // shared edges won't line up correctly and the walk misfires. Since
+  // every shape here is centered on the origin (including star
+  // polyhedra like the great dodecahedron), a face's outward direction
+  // can be checked by comparing its own normal (via Newell's method,
+  // which works for any planar polygon) against the direction from the
+  // origin to that face's centroid - this reorders/reverses faces as
+  // needed so every face is consistently wound before it's used.
+  // ---------------------------------------------------------------
+  function newellNormal(poly, vertices) {
+    const normal = new THREE.Vector3(0, 0, 0);
+    const n = poly.length;
+    for (let i = 0; i < n; i++) {
+      const cur = vertices[poly[i]];
+      const nxt = vertices[poly[(i + 1) % n]];
+      normal.x += (cur.y - nxt.y) * (cur.z + nxt.z);
+      normal.y += (cur.z - nxt.z) * (cur.x + nxt.x);
+      normal.z += (cur.x - nxt.x) * (cur.y + nxt.y);
+    }
+    return normal;
+  }
+
+  // Makes every face wind the same way as its neighbours by walking across
+  // shared edges (a neighbour that walks a shared edge in the SAME
+  // direction gets reversed), then picks the overall direction so faces
+  // point outward. This only uses which faces touch which, not where the
+  // shape sits relative to the origin, so it works for lopsided or
+  // off-centre shapes (e.g. ones with the origin on an edge or face).
+  function normalizeFaceWinding(vertices, facePolygons) {
+    const faces = facePolygons.map((f) => f.slice());
+    const edgeUsers = new Map();
+    faces.forEach((poly, fi) => {
+      poly.forEach((a, i) => {
+        const b = poly[(i + 1) % poly.length];
+        const key = a < b ? a + "_" + b : b + "_" + a;
+        if (!edgeUsers.has(key)) edgeUsers.set(key, []);
+        edgeUsers.get(key).push(fi);
+      });
+    });
+
+    function walks(fi, a, b) {
+      const poly = faces[fi];
+      for (let i = 0; i < poly.length; i++) {
+        if (poly[i] === a && poly[(i + 1) % poly.length] === b) return true;
+      }
+      return false;
+    }
+
+    const visited = new Array(faces.length).fill(false);
+    for (let s = 0; s < faces.length; s++) {
+      if (visited[s]) continue;
+      const component = [s];
+      const queue = [s];
+      visited[s] = true;
+      while (queue.length) {
+        const fi = queue.shift();
+        const poly = faces[fi];
+        for (let i = 0; i < poly.length; i++) {
+          const a = poly[i];
+          const b = poly[(i + 1) % poly.length];
+          const users = edgeUsers.get(a < b ? a + "_" + b : b + "_" + a);
+          if (!users || users.length !== 2) continue;
+          const gi = users[0] === fi ? users[1] : users[0];
+          if (gi === fi || visited[gi]) continue;
+          if (walks(gi, a, b)) faces[gi].reverse();
+          visited[gi] = true;
+          component.push(gi);
+          queue.push(gi);
+        }
+      }
+
+      // Overall direction: for a closed surface, summing normal . (centre ->
+      // face) over all faces gives 3x the signed volume, whichever
+      // reference point is used - so use the shape's own vertex centre.
+      const used = new Set();
+      component.forEach((fi) => faces[fi].forEach((v) => used.add(v)));
+      const centre = new THREE.Vector3();
+      used.forEach((v) => centre.add(vertices[v]));
+      centre.divideScalar(used.size || 1);
+
+      let score = 0;
+      component.forEach((fi) => {
+        const outward = faceCentroidOf(faces[fi], vertices).sub(centre);
+        score += newellNormal(faces[fi], vertices).dot(outward);
+      });
+      if (score < 0) component.forEach((fi) => faces[fi].reverse());
+    }
+    return faces;
+  }
+
+  function faceCentroidOf(poly, vertices) {
+    const c = new THREE.Vector3();
+    poly.forEach((idx) => c.add(vertices[idx]));
+    return c.divideScalar(poly.length);
+  }
+
+  // Drops any vertex that isn't referenced by at least one face, and
+  // remaps face indices to match the shrunk vertex list. Leftover
+  // vertices like this (e.g. cube corners not used when you reorder its
+  // hull into a bipyramid) also silently corrupt the average-radius size
+  // metric used to rescale shapes after each operation, since it's
+  // averaging in points that aren't actually part of the visible shape -
+  // pruning them keeps that (and everything downstream, like duals of
+  // duals) accurate.
+  function pruneUnusedVertices(vertices, facePolygons) {
+    const used = new Set();
+    facePolygons.forEach((poly) => poly.forEach((idx) => used.add(idx)));
+    const sortedUsed = Array.from(used).sort((a, b) => a - b);
+    const oldToNew = new Map();
+    sortedUsed.forEach((oldIdx, newIdx) => oldToNew.set(oldIdx, newIdx));
+
+    const newVertices = sortedUsed.map((idx) => vertices[idx].clone());
+    const newFaces = facePolygons.map((poly) => poly.map((idx) => oldToNew.get(idx)));
+    return { vertices: newVertices, faces: newFaces };
+  }
+
+  // ---------------------------------------------------------------
+  // Dual polyhedron computation (general, for any custom polyhedron -
+  // including non-convex/star polyhedra such as the great dodecahedron).
+  //
+  // Dual vertices = face centroids.
+  // Dual faces = for each original vertex, the centroids of its
+  // surrounding faces, in the cyclic order those faces actually meet
+  // around that vertex. That cyclic order MUST be derived from shared
+  // edges (topology), not from sorting by angle - angle-sorting only
+  // gives the right answer for convex shapes. For a star polyhedron
+  // like the great dodecahedron, walking by shared edges is what
+  // produces the correct pentagram face order of its dual (the small
+  // stellated dodecahedron) instead of a plain convex pentagon.
+  // ---------------------------------------------------------------
+  function computeDualPolyhedron(vertices, rawFacePolygons, preferredCentre) {
+    // The edge walk below needs every face wound consistently, so fix the
+    // INPUT first (not just the output) - hand-built faces are often mixed.
+    const facePolygons = normalizeFaceWinding(vertices, rawFacePolygons);
+    const faceCentroids = facePolygons.map((f) => {
+      const c = new THREE.Vector3();
+      f.forEach((idx) => c.add(vertices[idx]));
+      c.divideScalar(f.length);
+      return c;
+    });
+
+    // directed edge "a_b" -> the face that has consecutive vertices a,b
+    // (in that order) somewhere in its polygon
+    const edgeMap = new Map();
+    facePolygons.forEach((poly, fi) => {
+      const n = poly.length;
+      for (let i = 0; i < n; i++) {
+        const a = poly[i];
+        const b = poly[(i + 1) % n];
+        edgeMap.set(a + "_" + b, fi);
+      }
+    });
+
+    // for each vertex, every face touching it, with that face's
+    // neighboring vertices (prev/next) around this vertex
+    const vertexFaceEntries = vertices.map(() => []);
+    facePolygons.forEach((poly, fi) => {
+      const n = poly.length;
+      for (let i = 0; i < n; i++) {
+        const v = poly[i];
+        const prev = poly[(i - 1 + n) % n];
+        const next = poly[(i + 1) % n];
+        vertexFaceEntries[v].push({ face: fi, prev, next });
+      }
+    });
+
+    const dualFaces = [];
+    vertices.forEach((v, vi) => {
+      const entries = vertexFaceEntries[vi];
+      if (entries.length < 3) return;
+
+      const entryByFace = new Map();
+      entries.forEach((e) => entryByFace.set(e.face, e));
+
+      // Walk the fan of faces around vi by hopping across shared edges:
+      // from a face, cross the edge (prev -> vi) to reach the face on
+      // the other side, which is the one holding directed edge (vi -> prev).
+      const startFace = entries[0].face;
+      const order = [];
+      let currentFace = startFace;
+      let guard = 0;
+      do {
+        order.push(currentFace);
+        const entry = entryByFace.get(currentFace);
+        const nextFace = edgeMap.get(vi + "_" + entry.prev);
+        if (nextFace === undefined || nextFace === currentFace) break;
+        currentFace = nextFace;
+        guard++;
+      } while (currentFace !== startFace && guard < entries.length + 2);
+
+      if (order.length >= 3 && order.length === entries.length) {
+        dualFaces.push(order);
+      }
+    });
+
+    // Dual vertex positions by polar reciprocation about a centre point: a
+    // face plane at distance d with outward unit normal n becomes the point
+    // centre + n * r^2 / d. Unlike face centroids this reflects lopsided
+    // proportions (differently sized pyramids give differently sized dual
+    // faces) and taking the dual twice about the same centre returns the
+    // original shape. The centre must lie strictly inside every face plane.
+    const usedIdx = new Set();
+    facePolygons.forEach((poly) => poly.forEach((v) => usedIdx.add(v)));
+    const usedVerts = Array.from(usedIdx).map((v) => vertices[v]);
+    const mean = new THREE.Vector3();
+    usedVerts.forEach((v) => mean.add(v));
+    mean.divideScalar(usedVerts.length || 1);
+
+    function polar(centre) {
+      let scale = 0;
+      usedVerts.forEach((v) => (scale += v.distanceTo(centre)));
+      scale /= usedVerts.length || 1;
+      const points = [];
+      for (const poly of facePolygons) {
+        const normal = newellNormal(poly, vertices);
+        if (normal.lengthSq() < 1e-12) return null;
+        normal.normalize();
+        const d = normal.dot(faceCentroidOf(poly, vertices).sub(centre));
+        if (d < 1e-3 * scale) return null;
+        points.push(centre.clone().addScaledVector(normal, (scale * scale) / d));
+      }
+      return points;
+    }
+
+    const candidates = [];
+    if (preferredCentre) candidates.push(preferredCentre);
+    candidates.push(mean, boundsCentre(usedVerts));
+    for (const c of candidates) {
+      const points = polar(c);
+      if (points) {
+        return { vertices: points, faces: normalizeFaceWinding(points, dualFaces), centre: c.clone() };
+      }
+    }
+    // No interior point works (very unusual) - fall back to face centroids.
+    return {
+      vertices: faceCentroids,
+      faces: normalizeFaceWinding(faceCentroids, dualFaces),
+      centre: mean.clone(),
+    };
+  }
+
+  // ---------------------------------------------------------------
+  // Truncation. Every edge a-b gets two cut points, one a fraction t of the
+  // way in from each end. Each original face becomes a polygon through its
+  // cut points (2n corners), and each original vertex becomes a new face
+  // through the cut points on its edges. At t = 0.5 the two cut points on an
+  // edge coincide at its midpoint - that is rectification.
+  // ---------------------------------------------------------------
+  function isClosedManifold(faces) {
+    if (faces.length === 0) return false;
+    const seen = new Set();
+    for (const poly of faces) {
+      for (let i = 0; i < poly.length; i++) {
+        const key = poly[i] + "_" + poly[(i + 1) % poly.length];
+        if (seen.has(key)) return false;
+        seen.add(key);
+      }
+    }
+    for (const key of seen) {
+      const parts = key.split("_");
+      if (!seen.has(parts[1] + "_" + parts[0])) return false;
+    }
+    return true;
+  }
+
+  function directedEdgeMap(faces) {
+    const map = new Map();
+    faces.forEach((poly, fi) => {
+      poly.forEach((a, i) => map.set(a + "_" + poly[(i + 1) % poly.length], fi));
+    });
+    return map;
+  }
+
+  // Neighbours of vertex v in cyclic order around it (found by hopping
+  // across shared edges, so star vertex figures work too). null if the
+  // faces around v don't close up into a ring.
+  function vertexRing(v, faces, edgeMap) {
+    const entries = [];
+    faces.forEach((poly, fi) => {
+      const n = poly.length;
+      poly.forEach((u, i) => {
+        if (u === v) entries.push({ face: fi, prev: poly[(i - 1 + n) % n] });
+      });
+    });
+    if (entries.length === 0) return [];
+    const byFace = new Map(entries.map((e) => [e.face, e]));
+    const seen = new Set();
+    const ring = [];
+    let cur = entries[0];
+    while (cur && !seen.has(cur.face)) {
+      seen.add(cur.face);
+      ring.push(cur.prev);
+      const g = edgeMap.get(v + "_" + cur.prev);
+      cur = g === undefined ? null : byFace.get(g);
+    }
+    return cur === entries[0] && ring.length === entries.length ? ring : null;
+  }
+
+  function truncatePolyhedron(vertices, rawFaces, t) {
+    const faces = normalizeFaceWinding(vertices, rawFaces);
+    if (!isClosedManifold(faces)) {
+      return { error: "needs a closed shape where every edge is shared by exactly two faces" };
+    }
+    const edgeMap = directedEdgeMap(faces);
+    const rectified = t >= 0.5 - 1e-9;
+    const frac = rectified ? 0.5 : t;
+
+    const points = [];
+    const index = new Map();
+    function cut(a, b) {
+      const key = rectified ? (a < b ? a + "_" + b : b + "_" + a) : a + ">" + b;
+      if (index.has(key)) return index.get(key);
+      const pa = vertices[a];
+      const pb = vertices[b];
+      const idx = points.length;
+      points.push(pa.clone().add(pb.clone().sub(pa).multiplyScalar(frac)));
+      index.set(key, idx);
+      return idx;
+    }
+
+    const newFaces = [];
+    const origin = []; // original face index each new face came from (-1 = new corner face)
+    faces.forEach((poly, fi) => {
+      const n = poly.length;
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const a = poly[i];
+        const b = poly[(i + 1) % n];
+        out.push(cut(a, b), cut(b, a));
+      }
+      const clean = out.filter((idx, i) => idx !== out[(i - 1 + out.length) % out.length]);
+      if (clean.length >= 3) {
+        newFaces.push(clean);
+        origin.push(fi);
+      }
+    });
+
+    for (let v = 0; v < vertices.length; v++) {
+      const ring = vertexRing(v, faces, edgeMap);
+      if (ring === null) return { error: "the faces around one of the corners don't form a closed ring" };
+      if (ring.length >= 3) {
+        newFaces.push(ring.map((u) => cut(v, u)));
+        origin.push(-1);
+      }
+    }
+
+    return { vertices: points, faces: normalizeFaceWinding(points, newFaces), origin };
+  }
+
+  // The named solids only carry triangles; merge coplanar triangles back
+  // into their true polygon faces (a cube's 12 triangles -> 6 squares).
+  function mergeCoplanarTriangles(verts, triangles) {
+    const groups = [];
+    triangles.forEach((tri) => {
+      const [a, b, c] = tri.map((i) => verts[i]);
+      const n = b.clone().sub(a).cross(c.clone().sub(a));
+      if (n.lengthSq() < 1e-12) return;
+      n.normalize();
+      const o = n.dot(a);
+      let g = groups.find((q) => q.n.dot(n) > 1 - 1e-5 && Math.abs(q.o - o) < 1e-3);
+      if (!g) {
+        g = { n, o, tris: [] };
+        groups.push(g);
+      }
+      g.tris.push(tri);
+    });
+
+    const faces = [];
+    groups.forEach((g) => {
+      const dir = new Set();
+      g.tris.forEach(([a, b, c]) => {
+        dir.add(a + "_" + b);
+        dir.add(b + "_" + c);
+        dir.add(c + "_" + a);
+      });
+      const next = new Map();
+      dir.forEach((key) => {
+        const [a, b] = key.split("_").map(Number);
+        if (!dir.has(b + "_" + a)) next.set(a, b);
+      });
+      if (next.size === 0) return;
+      const start = next.keys().next().value;
+      const poly = [start];
+      let cur = next.get(start);
+      let guard = 0;
+      while (cur !== undefined && cur !== start && guard++ < 1000) {
+        poly.push(cur);
+        cur = next.get(cur);
+      }
+      if (poly.length >= 3) faces.push(poly);
+    });
+    return faces;
+  }
+
+  // Vertices + polygon faces of whatever is currently shown.
+  function currentPolygonShape() {
+    if (currentFacePolygons) return { verts: currentVerts, faces: currentFacePolygons };
+    if (!currentSolidName) return null;
+    const geometry = SOLID_GEOMETRIES[currentSolidName]();
+    geometry.scale(currentSolidScale, currentSolidScale, currentSolidScale);
+    const tris = facesFromRawGeometry(geometry, currentVerts);
+    return { verts: currentVerts, faces: mergeCoplanarTriangles(currentVerts, tris) };
+  }
+
+  // Centre + rescale vertices the same way a dual is fitted, so a shape
+  // that shrinks (as truncation does) keeps the previous shape's size.
+  function fitToCurrentSize(newVerts) {
+    const prevSize = currentVerts.length > 0 ? shapeSize(currentVerts) : null;
+    const newSize = shapeSize(newVerts);
+    const scale = prevSize !== null && newSize > 1e-6 ? prevSize / newSize : 1;
+    const shift = boundsCentre(newVerts);
+    return newVerts.map((v) => v.clone().sub(shift).multiplyScalar(scale));
+  }
+
+  // ---------------------------------------------------------------
+  // Applying a shape
+  // ---------------------------------------------------------------
+  function loadSolid(name) {
+    closeTruncationPanel(false);
+    const rawVerts = uniqueVerticesFromGeometry(SOLID_GEOMETRIES[name]());
+    const rawSize = shapeSize(rawVerts);
+    const prevSize = currentVerts.length > 0 ? shapeSize(currentVerts) : null;
+    currentSolidScale = prevSize !== null && rawSize > 1e-6 ? prevSize / rawSize : 1;
+    dualCentre = null;
+
+    currentSolidName = name;
+    currentFacePolygons = null;
+    faceColors = [];
+    currentVerts = rawVerts.map((v) => v.clone().multiplyScalar(currentSolidScale));
+    rebuildVertexSpheres(currentVerts);
+    hideAllVertexSpheres();
+
+    mode = "original";
+    pendingFacePolygons = [];
+    selectedIndices = [];
+    renderCurrentShape();
+
+    setActiveSolidButton(name);
+    dualBtn.disabled = false;
+    reorderBtn.disabled = false;
+    exportBtn.disabled = false;
+    reorderBtn.classList.remove("active");
+    reorderBtn.textContent = "Reorder Convex Hull";
+    infoDiv.textContent = "Drag to rotate \u00b7 Scroll to zoom";
+
+    pushHistory();
+  }
+
+  // Applies a freshly computed dual: moves it so its bounding box is centred
+  // on the origin (the centre of rotation) and scales it so its farthest
+  // vertex is as far out as the previous shape's was, so nothing needs
+  // re-zooming or re-centring. `centre` is the point the dual was
+  // reciprocated about; it moves and scales along with the shape so the
+  // next dual can reuse it.
+  function applyCustomPolyhedron(newVerts, newFacePolygons, centre, colors) {
+    closeTruncationPanel(false);
+    const prevSize = currentVerts.length > 0 ? shapeSize(currentVerts) : null;
+    const newSize = shapeSize(newVerts);
+    const scale = prevSize !== null && newSize > 1e-6 ? prevSize / newSize : 1;
+    const shift = boundsCentre(newVerts);
+
+    currentVerts = newVerts.map((v) => v.clone().sub(shift).multiplyScalar(scale));
+    dualCentre = centre ? centre.clone().sub(shift).multiplyScalar(scale) : null;
+    currentFacePolygons = newFacePolygons;
+    faceColors = colors ? colors.slice() : newFacePolygons.map(() => null);
+    currentSolidName = null;
+    currentSolidScale = 1;
+    rebuildVertexSpheres(currentVerts);
+    hideAllVertexSpheres();
+
+    mode = "original";
+    pendingFacePolygons = [];
+    selectedIndices = [];
+    renderCurrentShape();
+
+    setActiveSolidButton(null);
+    dualBtn.disabled = false;
+    reorderBtn.disabled = false;
+    exportBtn.disabled = false;
+    reorderBtn.classList.remove("active");
+    reorderBtn.textContent = "Reorder Convex Hull";
+    infoDiv.textContent = "Drag to rotate \u00b7 Scroll to zoom";
+
+    pushHistory();
+  }
+
+  // ---------------------------------------------------------------
+  // Undo / redo history. Only finalized shape changes are recorded
+  // (loading a solid, computing a dual, persisting a reorder session,
+  // importing) - not every intermediate click while building a face.
+  // ---------------------------------------------------------------
+  let history = [];
+  let historyIndex = -1;
+  let restoringHistory = false;
+
+  function snapshotState() {
+    return {
+      verts: currentVerts.map((v) => v.clone()),
+      facePolygons: currentFacePolygons ? currentFacePolygons.map((f) => f.slice()) : null,
+      solidName: currentSolidName,
+      solidScale: currentSolidScale,
+      faceColors: faceColors.slice(),
+      dualCentre: dualCentre ? dualCentre.clone() : null,
+    };
+  }
+
+  function updateUndoRedoButtons() {
+    undoBtn.disabled = historyIndex <= 0;
+    redoBtn.disabled = historyIndex >= history.length - 1;
+  }
+
+  function pushHistory() {
+    if (restoringHistory) return;
+    history = history.slice(0, historyIndex + 1);
+    history.push(snapshotState());
+    historyIndex = history.length - 1;
+    updateUndoRedoButtons();
+  }
+
+  function restoreState(state) {
+    closeTruncationPanel(false);
+    restoringHistory = true;
+
+    currentVerts = state.verts.map((v) => v.clone());
+    currentFacePolygons = state.facePolygons ? state.facePolygons.map((f) => f.slice()) : null;
+    currentSolidName = state.solidName;
+    currentSolidScale = state.solidScale;
+    faceColors = state.faceColors
+      ? state.faceColors.slice()
+      : currentFacePolygons ? currentFacePolygons.map(() => null) : [];
+    dualCentre = state.dualCentre ? state.dualCentre.clone() : null;
+    rebuildVertexSpheres(currentVerts);
+    hideAllVertexSpheres();
+
+    mode = "original";
+    pendingFacePolygons = [];
+    selectedIndices = [];
+    renderCurrentShape();
+
+    setActiveSolidButton(currentSolidName);
+    dualBtn.disabled = false;
+    reorderBtn.disabled = false;
+    exportBtn.disabled = false;
+    reorderBtn.classList.remove("active");
+    reorderBtn.textContent = "Reorder Convex Hull";
+    infoDiv.textContent = "Drag to rotate \u00b7 Scroll to zoom";
+
+    restoringHistory = false;
+    updateUndoRedoButtons();
+  }
+
+  function undo() {
+    if (historyIndex <= 0) return;
+    historyIndex--;
+    restoreState(history[historyIndex]);
+  }
+
+  function redo() {
+    if (historyIndex >= history.length - 1) return;
+    historyIndex++;
+    restoreState(history[historyIndex]);
+  }
+
+  // ---------------------------------------------------------------
+  // Menu wiring
+  // ---------------------------------------------------------------
+  const loadSolidToggle = document.getElementById("loadSolidToggle");
+  const solidSubmenu = document.getElementById("solidSubmenu");
+  const solidButtons = document.querySelectorAll("#solidSubmenu button[data-solid]");
+  const dualBtn = document.getElementById("dualBtn");
+  const reorderBtn = document.getElementById("reorderBtn");
+  const exportBtn = document.getElementById("exportBtn");
+  const importBtn = document.getElementById("importBtn");
+  const undoBtn = document.getElementById("undoBtn");
+  const redoBtn = document.getElementById("redoBtn");
+  const infoDiv = document.getElementById("info");
+
+  undoBtn.addEventListener("click", undo);
+  redoBtn.addEventListener("click", redo);
+
+  document.addEventListener("keydown", (e) => {
+    if (mode === "custom") return; // Space is used for face-building there
+    const key = e.key.toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && key === "z" && !e.shiftKey) {
+      e.preventDefault();
+      undo();
+    } else if ((e.ctrlKey || e.metaKey) && (key === "y" || (key === "z" && e.shiftKey))) {
+      e.preventDefault();
+      redo();
+    }
+  });
+
+  loadSolidToggle.addEventListener("click", () => {
+    solidSubmenu.classList.toggle("hidden");
+  });
+
+  function setActiveSolidButton(name) {
+    solidButtons.forEach((b) => {
+      b.classList.toggle("active", b.dataset.solid === name);
+    });
+  }
+
+  solidButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      loadSolid(btn.dataset.solid);
+      solidSubmenu.classList.add("hidden");
+    });
+  });
+
+  dualBtn.addEventListener("click", () => {
+    if (!currentVerts.length) return;
+
+    if (!currentFacePolygons) {
+      // Still one of the five named solids - use the exact known dual
+      loadSolid(DUAL_MAP[currentSolidName]);
+      return;
+    }
+
+    const dual = computeDualPolyhedron(currentVerts, currentFacePolygons, dualCentre);
+    if (dual.faces.length === 0) {
+      infoDiv.textContent = "Can't compute a dual from this shape";
+      return;
+    }
+    const pruned = pruneUnusedVertices(dual.vertices, dual.faces);
+    applyCustomPolyhedron(pruned.vertices, pruned.faces, dual.centre);
+  });
+
+  reorderBtn.addEventListener("click", () => {
+    if (!currentVerts.length) return;
+
+    if (mode !== "custom") {
+      // Enter reorder mode: strip faces, show all points
+      closeTruncationPanel(false);
+      setPainting(false);
+      mode = "custom";
+      pendingFacePolygons = [];
+      clearAllSelectionHighlights();
+      setFaceGeometry(null);
+      updateSelectablePoints();
+      reorderBtn.classList.add("active");
+      reorderBtn.textContent = "Exit Reorder Mode";
+      infoDiv.textContent = "Click coplanar points, then press Space to add a face";
+    } else {
+      // Exit reorder mode: persist whatever faces were built as the new shape
+      mode = "original";
+      clearAllSelectionHighlights();
+      if (pendingFacePolygons.length > 0) {
+        const wound = normalizeFaceWinding(currentVerts, pendingFacePolygons);
+        const pruned = pruneUnusedVertices(currentVerts, wound);
+        currentVerts = pruned.vertices;
+        currentFacePolygons = pruned.faces;
+        faceColors = pruned.faces.map(() => null);
+        currentSolidName = null;
+        dualCentre = null;
+        rebuildVertexSpheres(currentVerts);
+        setActiveSolidButton(null);
+      }
+      pendingFacePolygons = [];
+      renderCurrentShape();
+      hideAllVertexSpheres();
+      reorderBtn.classList.remove("active");
+      reorderBtn.textContent = "Reorder Convex Hull";
+      infoDiv.textContent = "Drag to rotate \u00b7 Scroll to zoom";
+      pushHistory();
+    }
+  });
+
+  // ---------------------------------------------------------------
+  // Import / export the current polyhedron as a text string
+  // ---------------------------------------------------------------
+  // Matches each triangle corner of a (possibly rescaled) geometry to the
+  // nearest vertex in `verts`, so tiny rounding differences can't drop faces.
+  function facesFromRawGeometry(geometry, verts) {
+    const pos = geometry.attributes.position;
+    const p = new THREE.Vector3();
+    function nearest(j) {
+      p.set(pos.getX(j), pos.getY(j), pos.getZ(j));
+      let best = -1;
+      let bestD = Infinity;
+      verts.forEach((v, i) => {
+        const d = v.distanceTo(p);
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      return bestD < 1e-2 ? best : undefined;
+    }
+    // BoxGeometry (the cube) is indexed: its triangles are listed in
+    // geometry.index, not as consecutive position triples like the others.
+    const index = geometry.index;
+    const count = index ? index.count : pos.count;
+    const corner = (k) => (index ? index.getX(k) : k);
+    const faces = [];
+    for (let i = 0; i + 2 < count; i += 3) {
+      const tri = [nearest(corner(i)), nearest(corner(i + 1)), nearest(corner(i + 2))];
+      if (tri.every((idx) => idx !== undefined)) faces.push(tri);
+    }
+    return faces;
+  }
+
+  function getExportData() {
+    let faces;
+    if (currentFacePolygons) {
+      faces = currentFacePolygons;
+    } else if (currentSolidName) {
+      const geometry = SOLID_GEOMETRIES[currentSolidName]();
+      geometry.scale(currentSolidScale, currentSolidScale, currentSolidScale);
+      faces = facesFromRawGeometry(geometry, currentVerts);
+    } else {
+      faces = [];
+    }
+    return {
+      vertices: currentVerts.map((v) => [
+        +v.x.toFixed(6),
+        +v.y.toFixed(6),
+        +v.z.toFixed(6),
+      ]),
+      faces,
+      ...(currentFacePolygons && faceColors.some((c) => c) ? { colors: faceColors } : {}),
+    };
+  }
+
+  function loadPolyhedronFromData(data) {
+    closeTruncationPanel(false);
+    if (!data || !Array.isArray(data.vertices) || !Array.isArray(data.faces)) {
+      throw new Error("Expected an object with 'vertices' and 'faces' arrays");
+    }
+    const verts = data.vertices.map(([x, y, z]) => new THREE.Vector3(x, y, z));
+    const wound = normalizeFaceWinding(verts, data.faces);
+    const pruned = pruneUnusedVertices(verts, wound);
+
+    currentVerts = pruned.vertices;
+    currentFacePolygons = pruned.faces;
+    faceColors = pruned.faces.map((_, i) => {
+      const c = Array.isArray(data.colors) ? data.colors[i] : null;
+      return typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c) ? c : null;
+    });
+    currentSolidName = null;
+    currentSolidScale = 1;
+    dualCentre = null;
+    rebuildVertexSpheres(currentVerts);
+    hideAllVertexSpheres();
+
+    mode = "original";
+    pendingFacePolygons = [];
+    selectedIndices = [];
+    renderCurrentShape();
+
+    setActiveSolidButton(null);
+    dualBtn.disabled = false;
+    reorderBtn.disabled = false;
+    exportBtn.disabled = false;
+    reorderBtn.classList.remove("active");
+    reorderBtn.textContent = "Reorder Convex Hull";
+    infoDiv.textContent = "Drag to rotate \u00b7 Scroll to zoom";
+    pushHistory();
+  }
+
+  // ---------------------------------------------------------------
+  // Modal (used for both export and import) - a real in-page dialog
+  // rather than window.prompt()/alert(), since those are blocked
+  // entirely in some sandboxed preview environments.
+  // ---------------------------------------------------------------
+  const modalOverlay = document.getElementById("modalOverlay");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalTextarea = document.getElementById("modalTextarea");
+  const modalStatus = document.getElementById("modalStatus");
+  const modalPrimaryBtn = document.getElementById("modalPrimaryBtn");
+  const modalCancelBtn = document.getElementById("modalCancelBtn");
+
+  function openModal({ title, initialText, readOnly, primaryLabel, onPrimary }) {
+    modalTitle.textContent = title;
+    modalTextarea.value = initialText || "";
+    modalTextarea.readOnly = !!readOnly;
+    modalStatus.textContent = "";
+    modalPrimaryBtn.textContent = primaryLabel;
+    modalPrimaryBtn.onclick = () => onPrimary(modalTextarea.value);
+    modalOverlay.classList.remove("hidden");
+    modalTextarea.focus();
+    modalTextarea.select();
+  }
+
+  function closeModal() {
+    modalOverlay.classList.add("hidden");
+  }
+
+  modalCancelBtn.addEventListener("click", closeModal);
+  modalOverlay.addEventListener("click", (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  exportBtn.addEventListener("click", () => {
+    if (!currentVerts.length) return;
+    const text = JSON.stringify(getExportData());
+    openModal({
+      title: "Export Polyhedron",
+      initialText: text,
+      readOnly: true,
+      primaryLabel: "Copy to Clipboard",
+      onPrimary: async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          modalStatus.textContent = "Copied!";
+        } catch (err) {
+          modalTextarea.focus();
+          modalTextarea.select();
+          modalStatus.textContent = "Clipboard access blocked here - text is selected, press Ctrl+C (or Cmd+C) to copy it.";
+        }
+      },
+    });
+  });
+
+  importBtn.addEventListener("click", () => {
+    openModal({
+      title: "Import Polyhedron",
+      initialText: "",
+      readOnly: false,
+      primaryLabel: "Load",
+      onPrimary: (text) => {
+        if (!text.trim()) {
+          modalStatus.textContent = "Paste some polyhedron text first.";
+          return;
+        }
+        try {
+          const data = JSON.parse(text);
+          loadPolyhedronFromData(data);
+          closeModal();
+        } catch (err) {
+          modalStatus.textContent = "Couldn't load that text: " + err.message;
+        }
+      },
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // Settings panel
+  // ---------------------------------------------------------------
+  const settingsBtn = document.getElementById("settingsBtn");
+  const settingsPanel = document.getElementById("settingsPanel");
+  const transparentToggle = document.getElementById("transparentToggle");
+
+  settingsBtn.addEventListener("click", () => {
+    settingsPanel.classList.toggle("hidden");
+  });
+
+  transparentToggle.addEventListener("change", () => {
+    settings.transparent = transparentToggle.checked;
+    reapplyFaceMaterialSettings();
+  });
+
+  // ---------------------------------------------------------------
+  // Picking a vertex (used only in custom face-building mode)
+  // ---------------------------------------------------------------
+  const raycaster = new THREE.Raycaster();
+  const mouseNDC = new THREE.Vector2();
+
+  function trySelectPointAt(clientX, clientY) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouseNDC.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    mouseNDC.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouseNDC, camera);
+
+    const selectable = vertexSpheres.filter((s) => s.visible);
+    const hits = raycaster.intersectObjects(selectable);
+    if (hits.length === 0) return;
+
+    const sphere = hits[0].object;
+    const idx = sphere.userData.index;
+    if (!selectedIndices.includes(idx)) {
+      selectedIndices.push(idx);
+      sphere.material.color.setHex(highlightColorHex);
+      updateSelectablePoints();
+    }
+  }
+
+  function tryCreateFaceFromSelection() {
+    if (selectedIndices.length >= 3) {
+      pendingFacePolygons.push(selectedIndices.slice());
+      setFaceGeometry(geometryFromFacePolygons(currentVerts, pendingFacePolygons));
+    }
+    clearAllSelectionHighlights();
+    updateSelectablePoints();
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "Space" && mode === "custom") {
+      e.preventDefault();
+      tryCreateFaceFromSelection();
+    }
+  });
+
+  // ---------------------------------------------------------------
+  // Mouse-drag rotation around the origin, plus click-to-select
   // ---------------------------------------------------------------
   let isDragging = false;
+  let dragMoved = false;
   let prevX = 0;
   let prevY = 0;
+  let downX = 0;
+  let downY = 0;
 
   const rotationSpeed = 0.005;
+  const dragThreshold = 4;
+
+  // Rotate around fixed world-space axes (screen-horizontal and
+  // screen-vertical), applied via quaternion premultiply. Accumulating
+  // local Euler angles instead (worldGroup.rotation.x/y +=) causes drag
+  // direction to invert once the object has been rotated far enough
+  // (e.g. upside down) - premultiplying by a world-space delta keeps
+  // "drag left" always meaning the same thing on screen, no matter how
+  // the shape is currently oriented.
+  const worldUp = new THREE.Vector3(0, 1, 0);
+  const worldRight = new THREE.Vector3(1, 0, 0);
+  const dragYaw = new THREE.Quaternion();
+  const dragPitch = new THREE.Quaternion();
+
+  function applyDragRotation(dx, dy) {
+    dragYaw.setFromAxisAngle(worldUp, dx * rotationSpeed);
+    dragPitch.setFromAxisAngle(worldRight, dy * rotationSpeed);
+    worldGroup.quaternion.premultiply(dragYaw);
+    worldGroup.quaternion.premultiply(dragPitch);
+  }
 
   renderer.domElement.addEventListener("mousedown", (e) => {
     isDragging = true;
-    prevX = e.clientX;
-    prevY = e.clientY;
-  });
-
-  window.addEventListener("mouseup", () => {
-    isDragging = false;
+    dragMoved = false;
+    prevX = downX = e.clientX;
+    prevY = downY = e.clientY;
   });
 
   window.addEventListener("mousemove", (e) => {
@@ -143,18 +1685,33 @@
     prevX = e.clientX;
     prevY = e.clientY;
 
-    worldGroup.rotation.y += dx * rotationSpeed;
-    worldGroup.rotation.x += dy * rotationSpeed;
+    if (Math.abs(e.clientX - downX) > dragThreshold || Math.abs(e.clientY - downY) > dragThreshold) {
+      dragMoved = true;
+    }
+
+    applyDragRotation(dx, dy);
   });
 
-  // Touch support (single-finger drag)
+  window.addEventListener("mouseup", (e) => {
+    if (isDragging && !dragMoved) {
+      if (mode === "custom") trySelectPointAt(e.clientX, e.clientY);
+      else if (painting) tryPaintFaceAt(e.clientX, e.clientY);
+    }
+    isDragging = false;
+  });
+
+  // Touch support (single-finger drag to rotate, tap to select)
   let lastTouchX = 0;
   let lastTouchY = 0;
+  let touchDownX = 0;
+  let touchDownY = 0;
+  let touchMoved = false;
 
   renderer.domElement.addEventListener("touchstart", (e) => {
     if (e.touches.length === 1) {
-      lastTouchX = e.touches[0].clientX;
-      lastTouchY = e.touches[0].clientY;
+      lastTouchX = touchDownX = e.touches[0].clientX;
+      lastTouchY = touchDownY = e.touches[0].clientY;
+      touchMoved = false;
     }
   });
 
@@ -165,13 +1722,24 @@
       lastTouchX = e.touches[0].clientX;
       lastTouchY = e.touches[0].clientY;
 
-      worldGroup.rotation.y += dx * rotationSpeed;
-      worldGroup.rotation.x += dy * rotationSpeed;
+      if (Math.abs(e.touches[0].clientX - touchDownX) > dragThreshold ||
+          Math.abs(e.touches[0].clientY - touchDownY) > dragThreshold) {
+        touchMoved = true;
+      }
+
+      applyDragRotation(dx, dy);
       e.preventDefault();
     }
   }, { passive: false });
 
-  // Scroll to zoom (move camera along its local z-axis)
+  renderer.domElement.addEventListener("touchend", () => {
+    if (!touchMoved) {
+      if (mode === "custom") trySelectPointAt(lastTouchX, lastTouchY);
+      else if (painting) tryPaintFaceAt(lastTouchX, lastTouchY);
+    }
+  });
+
+  // Scroll to zoom
   renderer.domElement.addEventListener(
     "wheel",
     (e) => {
@@ -183,19 +1751,204 @@
     { passive: false }
   );
 
-  // Handle window resize
   window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  // Render loop
   function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
   }
   animate();
+
+  // ---------------------------------------------------------------
+  // Truncation slider: live preview while dragging, Apply makes it the
+  // new polyhedron (so dual, reorder, undo etc. all work on the result).
+  // ---------------------------------------------------------------
+  const truncBtn = document.getElementById("truncBtn");
+  const truncPanel = document.getElementById("truncPanel");
+  const truncSlider = document.getElementById("truncSlider");
+  const truncLabel = document.getElementById("truncLabel");
+  const truncApply = document.getElementById("truncApply");
+  const truncCancel = document.getElementById("truncCancel");
+  let truncating = false;
+  let truncSource = null;
+  let truncColors = null;
+
+  function carryColors(origin, colors) {
+    return origin.map((o) => (o >= 0 && colors && colors[o]) || null);
+  }
+
+  function closeTruncationPanel(restoreView) {
+    if (!truncating) return;
+    truncating = false;
+    truncPanel.classList.add("hidden");
+    truncBtn.classList.remove("active");
+    if (restoreView) renderCurrentShape();
+  }
+
+  function updateTruncationPreview() {
+    const pct = Number(truncSlider.value);
+    truncLabel.textContent =
+      pct === 0 ? "Truncation: none" : pct === 100 ? "Rectification" : "Truncation: " + pct + "%";
+    if (pct === 0) {
+      renderCurrentShape();
+      return;
+    }
+    const result = truncatePolyhedron(truncSource.verts, truncSource.faces, (pct / 100) * 0.5);
+    if (result.error) {
+      infoDiv.textContent = "Can't truncate: " + result.error;
+      return;
+    }
+    const preview = fitToCurrentSize(result.vertices);
+    setFaceGeometry(
+      geometryFromFacePolygons(preview, result.faces, carryColors(result.origin, truncColors))
+    );
+  }
+
+  truncBtn.addEventListener("click", () => {
+    if (truncating) {
+      closeTruncationPanel(true);
+      return;
+    }
+    if (mode === "custom") {
+      infoDiv.textContent = "Exit reorder mode before truncating";
+      return;
+    }
+    const shape = currentPolygonShape();
+    if (!shape || shape.faces.length === 0) return;
+    const probe = truncatePolyhedron(shape.verts, shape.faces, 0.25);
+    if (probe.error) {
+      infoDiv.textContent = "Can't truncate: " + probe.error;
+      return;
+    }
+    truncSource = shape;
+    truncColors = currentFacePolygons ? faceColors.slice() : null;
+    truncating = true;
+    truncSlider.value = 0;
+    truncPanel.classList.remove("hidden");
+    truncBtn.classList.add("active");
+    updateTruncationPreview();
+  });
+
+  truncSlider.addEventListener("input", updateTruncationPreview);
+  truncCancel.addEventListener("click", () => closeTruncationPanel(true));
+
+  truncApply.addEventListener("click", () => {
+    if (!truncating) return;
+    const pct = Number(truncSlider.value);
+    if (pct === 0) {
+      closeTruncationPanel(true);
+      return;
+    }
+    const result = truncatePolyhedron(truncSource.verts, truncSource.faces, (pct / 100) * 0.5);
+    if (result.error) {
+      infoDiv.textContent = "Can't truncate: " + result.error;
+      return;
+    }
+    closeTruncationPanel(false);
+    const pruned = pruneUnusedVertices(result.vertices, result.faces);
+    applyCustomPolyhedron(
+      pruned.vertices,
+      pruned.faces,
+      null,
+      carryColors(result.origin, truncColors)
+    );
+  });
+
+  // ---------------------------------------------------------------
+  // Face painting: pick a colour on the left, click a face to apply it.
+  // A named solid only has triangles, so the first paint converts it to a
+  // polygon shape (a cube gets 6 square faces) - painting whole faces.
+  // ---------------------------------------------------------------
+  const colorInput = document.getElementById("colorInput");
+  const swatchBox = document.getElementById("swatches");
+  const paintToggle = document.getElementById("paintToggle");
+  const resetColorsBtn = document.getElementById("resetColorsBtn");
+  const SWATCHES = ["#e63946", "#f4a261", "#ffd166", "#2a9d8f", "#5ec8ff", "#4361ee", "#9b5de5", "#f8f9fa", "#6c757d"];
+
+  function setPainting(on) {
+    painting = on;
+    paintToggle.classList.toggle("active", on);
+    paintToggle.textContent = on ? "Painting: click a face" : "Paint faces";
+    document.body.classList.toggle("painting", on);
+  }
+
+  function setPaintColor(hex) {
+    paintColor = hex.toLowerCase();
+    colorInput.value = paintColor;
+    swatchBox.querySelectorAll("button").forEach((b) => {
+      b.classList.toggle("selected", b.dataset.color === paintColor);
+    });
+    if (mode !== "custom") setPainting(true); // picking a colour means you want to paint
+  }
+
+  SWATCHES.forEach((hex) => {
+    const b = document.createElement("button");
+    b.style.background = hex;
+    b.dataset.color = hex;
+    b.title = hex;
+    b.addEventListener("click", () => setPaintColor(hex));
+    swatchBox.appendChild(b);
+  });
+  colorInput.addEventListener("input", () => setPaintColor(colorInput.value));
+  paintToggle.addEventListener("click", () => setPainting(!painting));
+
+  resetColorsBtn.addEventListener("click", () => {
+    if (!currentFacePolygons || !faceColors.some((c) => c)) return;
+    closeTruncationPanel(false);
+    faceColors = currentFacePolygons.map(() => null);
+    renderCurrentShape();
+    pushHistory();
+  });
+
+  function materializeNamedSolid() {
+    const shape = currentPolygonShape();
+    if (!shape || shape.faces.length === 0) return false;
+    currentFacePolygons = normalizeFaceWinding(currentVerts, shape.faces);
+    faceColors = currentFacePolygons.map(() => null);
+    currentSolidName = null;
+    currentSolidScale = 1;
+    dualCentre = null;
+    setActiveSolidButton(null);
+    renderCurrentShape();
+    return true;
+  }
+
+  function tryPaintFaceAt(clientX, clientY) {
+    if (mode === "custom" || truncating) return;
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouseNDC.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    mouseNDC.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouseNDC, camera);
+    scene.updateMatrixWorld(true);
+
+    let mesh = faceMeshObjects.find((o) => o.isMesh);
+    if (!mesh || raycaster.intersectObject(mesh).length === 0) return;
+
+    if (!currentFacePolygons) {
+      if (!materializeNamedSolid()) return;
+      scene.updateMatrixWorld(true);
+      mesh = faceMeshObjects.find((o) => o.isMesh);
+      if (!mesh) return;
+    }
+
+    const hits = raycaster.intersectObject(mesh);
+    if (hits.length === 0) return;
+    const fi = mesh.geometry.userData.triFace[hits[0].faceIndex];
+    if (fi === undefined || faceColors[fi] === paintColor) return;
+    faceColors[fi] = paintColor;
+    renderCurrentShape();
+    pushHistory();
+  }
+
+  setPaintColor(paintColor);
+  setPainting(false);
+
+  // Start with a cube
+  loadSolid("cube");
 </script>
 </body>
 </html>
