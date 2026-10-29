@@ -3,7 +3,7 @@
 //
 // The multiverse is a tree of universes. Each one starts from a seed
 // shape - its parent's current shape (the first universe's seed is the
-// starting cube) - and keeps the list of actions done in it:
+// starting dodecahedron) - and keeps the list of actions done in it:
 //   history[0]   = the seed
 //   history[i]   = the shape after actions[0..i-1]
 //   historyIndex = how far along it currently is (undo/redo move it)
@@ -110,4 +110,23 @@ function enterUniverse(universe) {
 // A new universe branching off `parent`, seeded with its current shape.
 function addChildUniverse(parent) {
   return makeUniverse(parent, universeShape(parent));
+}
+
+// Removes a universe and every universe branched from it. If you were
+// in one of them, you move to the removed universe's parent. The first
+// universe can't be removed. Returns how many universes were removed.
+function deleteUniverse(universe) {
+  if (!universe.parent) return 0;
+  const removed = new Set();
+  (function collect(u) {
+    removed.add(u);
+    u.children.forEach(collect);
+  })(universe);
+  const parent = universe.parent;
+  parent.children = parent.children.filter((c) => c !== universe);
+  universes = universes.filter((u) => !removed.has(u));
+  removed.forEach(forgetThumb);
+  if (pinnedUniverse && removed.has(pinnedUniverse)) setPinnedUniverse(null);
+  if (removed.has(activeUniverse)) enterUniverse(parent);
+  return removed.size;
 }

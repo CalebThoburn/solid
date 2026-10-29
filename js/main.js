@@ -19,8 +19,10 @@ function animate() {
       sharpMat.opacity = 0.75 + 0.25 * (0.5 + 0.5 * Math.sin(t + Math.PI / 2));
   }
   renderer.render(scene, camera);
+  renderChildStrip();
+  renderPinnedView();
 }
 animate();
 
-// Start with a cube: the seed of the first universe
-enterUniverse(makeUniverse(null, solidShape(emptyShape(), "cube")));
+// Start with a dodecahedron: the seed of the first universe
+enterUniverse(makeUniverse(null, solidShape(emptyShape(), "dodecahedron")));

@@ -104,7 +104,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 200px;
+  z-index: 6; /* above the pinned view on very short screens */
+  /* fixed, so changing text inside (e.g. the truncation label) can't
+     resize the menu and move the slider out from under the cursor */
+  width: 220px;
+  box-sizing: border-box;
 }
 .sectionHeader {
   display: flex;
@@ -299,10 +303,35 @@ body.painting canvas:active {
 #truncLabel {
   color: #cfd6e4;
   font-size: 12px;
+  line-height: 1.35;
+  height: 2.7em; /* always two lines, so the slider below never moves */
+  overflow: hidden;
 }
 #truncSlider {
   width: 100%;
   margin: 0;
+}
+#truncTrack {
+  position: relative;
+  padding-bottom: 8px;
+}
+#truncTicks {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 6px;
+  pointer-events: none;
+}
+#truncTicks span {
+  position: absolute;
+  width: 1px;
+  height: 6px;
+  background: #5a6782;
+}
+#truncTicks span.uniform {
+  background: #5ec8ff;
+  height: 7px;
 }
 #truncEnds {
   display: flex;
@@ -657,6 +686,27 @@ canvas:active {
   font-size: 11px;
   color: #8a96ad;
 }
+.plaqueDelete {
+  margin-left: auto;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #6b7891;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.plaqueDelete:hover {
+  color: #ff8a80;
+  border-color: #4a2a2a;
+}
+.plaqueDelete.armed {
+  color: #fff;
+  background: #8c2f2f;
+  border-color: #c25050;
+  font-size: 11px;
+}
 .plaqueAdd {
   width: 34px;
   flex-shrink: 0;
@@ -677,4 +727,148 @@ canvas:active {
 #stellPanel > #stellDiagrams {
   flex-shrink: 1;
   min-height: 0;
+}
+#childStrip {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  /* clear of the components panel on the left and the pinned view */
+  max-width: min(
+    60vw,
+    calc(100vw - 2 * max(300px, var(--pin-space, 0px)))
+  );
+  overflow-x: auto;
+  z-index: 5;
+}
+#childStrip.hidden {
+  display: none;
+}
+.childCard {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px;
+  background: rgba(20, 24, 34, 0.8);
+  border: 1px solid #263042;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #cfd6e4;
+  font: inherit;
+  text-align: left;
+}
+.childCard:hover {
+  border-color: #4a6085;
+}
+.childCard canvas {
+  width: 138px;
+  height: 90px;
+  border-radius: 5px;
+  background: #0b0e14;
+}
+.childHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.childName {
+  font-size: 11px;
+  font-weight: 600;
+}
+.childLast {
+  font-size: 10px;
+  color: #8a96ad;
+  max-width: 138px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.childLast.skipped {
+  color: #8a6f5a;
+  text-decoration: line-through;
+}
+.universeTools {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.universeTools .plaqueDelete {
+  margin-left: 0;
+}
+.pinBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #6b7891;
+  padding: 3px 5px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.pinBtn:hover {
+  color: #5ec8ff;
+  border-color: #2a4560;
+}
+.pinBtn.active {
+  color: #0b0e14;
+  background: #5ec8ff;
+  border-color: #5ec8ff;
+}
+#pinnedView {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 4; /* under the menu if they ever meet */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: rgba(20, 24, 34, 0.85);
+  border: 1px solid #263042;
+  border-radius: 10px;
+  cursor: pointer;
+}
+#pinnedView.here {
+  border-color: #5ec8ff;
+  cursor: default;
+}
+#pinnedView.hidden {
+  display: none;
+}
+#pinnedHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: #dbe2f0;
+  font-size: 12px;
+}
+#pinnedName {
+  font-weight: 600;
+}
+#pinnedNote {
+  color: #5ec8ff;
+  font-size: 11px;
+}
+#pinnedClose {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: #8a96ad;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+#pinnedClose:hover {
+  color: #dbe2f0;
+}
+#pinnedCanvas {
+  display: block;
+  border-radius: 7px;
+  background: #0b0e14;
 }

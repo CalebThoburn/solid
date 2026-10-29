@@ -7,7 +7,10 @@
 //
 //   { type: "solid", name }                 load a named solid
 //   { type: "dual" }
-//   { type: "truncate", t, color }          t: 0..0.5 (0.5 = rectified)
+//   { type: "truncate", t, color, preset }  t: cut depth (0.5 = rectified,
+//                                           see truncatePolyhedron); preset
+//                                           "uniform" / "quasiUniform" re-finds
+//                                           that depth on whatever shape it's on
 //   { type: "stellate", grows, color }      grows: face indices, in order,
 //                                           or "all" (next mainline stellation)
 //   { type: "stellateCells", on, signature, color }
@@ -44,7 +47,14 @@ function runAction(shape, action) {
     case "truncate": {
       const poly = polygonShapeOf(shape);
       if (!poly || poly.faces.length === 0) return null;
-      const result = truncatePolyhedron(poly.verts, poly.faces, action.t);
+      let t = action.t;
+      if (action.preset) {
+        const depths = uniformTruncationDepths(poly.verts, poly.faces);
+        if (!depths) return null;
+        t = action.preset === "uniform" ? depths.truncate : depths.quasi;
+        if (t === null) return null;
+      }
+      const result = truncatePolyhedron(poly.verts, poly.faces, t);
       if (result.error) return null;
       const pruned = pruneUnusedVertices(result.vertices, result.faces);
       const colors = carryColors(
@@ -55,38 +65,8 @@ function runAction(shape, action) {
       return customShape(shape, pruned.vertices, pruned.faces, null, colors);
     }
 
-    case "stellate": {
-      const poly = polygonShapeOf(shape);
-      if (!poly || poly.faces.length === 0) return null;
-      const regions = computeStellationRegions(
-        cleanedVertices(poly.verts, poly.faces),
-        poly.faces,
-      );
-      if (regions.length === 0) return null;
-      startStellationSession(regions);
-      const mergeGroups = [];
-      if (action.grows === "all") {
-        if (!stellGrowAllFaces(regions, mergeGroups)) return null;
-      } else {
-        for (const face of action.grows) {
-          if (!stellGrowFace(regions, mergeGroups, face)) return null;
-        }
-      }
-      const result = stellSessionResult(
-        regions,
-        mergeGroups,
-        shape.facePolygons ? shape.faceColors : null,
-        action.color,
-      );
-      if (!result) return null;
-      return customShape(
-        shape,
-        result.vertices,
-        result.faces,
-        null,
-        result.colors,
-      );
-    }
+    case "stellate":
+      return stellateShape(shape, action);
 
     case "stellateCells": {
       // Cell numbers only mean the same thing on the same stellation map.
@@ -175,10 +155,8 @@ function actionLabel(action) {
       return action.name.charAt(0).toUpperCase() + action.name.slice(1);
     case "dual":
       return "Dual";
-    case "truncate": {
-      const pct = Math.round(action.t * 200);
-      return pct >= 100 ? "Rectify" : "Truncate " + pct + "%";
-    }
+    case "truncate":
+      return truncationName(action.t, action.preset, true);
     case "stellate":
       return "Stellate";
     case "stellateCells":

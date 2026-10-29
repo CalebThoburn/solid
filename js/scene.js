@@ -32,4 +32,4 @@ let stellGlowMaterials = []; // materials pulsed each frame in animate() for the
 const faceColorHex = 0x2b6fb8;
 const sphereGeo = new THREE.SphereGeometry(0.09, 16, 16);
 
-const settings = { transparent: true };
+const settings = { transparent: false };

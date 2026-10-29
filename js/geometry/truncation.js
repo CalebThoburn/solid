@@ -64,7 +64,11 @@ function truncatePolyhedron(vertices, rawFaces, t) {
     };
   }
   const edgeMap = directedEdgeMap(faces);
-  const rectified = t >= 0.5 - 1e-9;
+  // t is how far along each edge (as a fraction of it) the cut lands,
+  // from each end: 0..0.5 truncates, 0.5 rectifies, 0.5..1 hypertruncates
+  // (the cuts from the two ends cross over), past 1 quasitruncates, and
+  // below 0 antitruncates (the cut lands outside, past the corner).
+  const rectified = Math.abs(t - 0.5) < 1e-9;
   const frac = rectified ? 0.5 : t;
 
   const points = [];
@@ -165,10 +169,52 @@ function flattenCornerCuts(vertices, points, pointEdge, cornerFaces, rectified) 
         den += along * along;
       });
       if (den < 1e-18) return;
-      const s = Math.min(Math.max(num / den, 0.001), 0.999);
+      // a shared rectification point has to stay inside its edge
+      const s = rectified
+        ? Math.min(Math.max(num / den, 0.001), 0.999)
+        : num / den;
       points[i] = start.clone().addScaledVector(dir, s);
     });
   }
+}
+
+// The cut depths that make every edge of the result the same length:
+// { truncate } (between 0 and 0.5; a cube's is 1/(2+sqrt2), giving
+// regular octagons) and { quasi } (past 1; a cube's is 1 + 1/sqrt2, giving
+// regular {8/3} octagrams). Each edge leaves a middle piece |1 - 2t|
+// times as long as itself, and each corner face gets edges t times as
+// long as the gap between two neighbouring corners - the depth where the
+// two kinds average out equal is exact on regular solids and the closest
+// fit on others. Null if the shape can't be truncated.
+function uniformTruncationDepths(vertices, rawFaces) {
+  const faces = normalizeFaceWinding(vertices, rawFaces);
+  if (!isClosedManifold(faces)) return null;
+  const edgeMap = directedEdgeMap(faces);
+  let edgeSum = 0,
+    edgeCount = 0,
+    gapSum = 0,
+    gapCount = 0;
+  faces.forEach((poly) =>
+    poly.forEach((a, i) => {
+      edgeSum += vertices[a].distanceTo(vertices[poly[(i + 1) % poly.length]]);
+      edgeCount++;
+    }),
+  );
+  for (let v = 0; v < vertices.length; v++) {
+    const ring = vertexRing(v, faces, edgeMap);
+    if (!ring || ring.length < 3) continue;
+    ring.forEach((u, i) => {
+      gapSum += vertices[u].distanceTo(vertices[ring[(i + 1) % ring.length]]);
+      gapCount++;
+    });
+  }
+  if (!edgeCount || !gapCount) return null;
+  const edge = edgeSum / edgeCount,
+    gap = gapSum / gapCount;
+  return {
+    truncate: edge / (2 * edge + gap),
+    quasi: 2 * edge > gap ? edge / (2 * edge - gap) : null,
+  };
 }
 
 // The named solids only carry triangles; merge coplanar triangles back

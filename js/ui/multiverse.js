@@ -49,10 +49,30 @@ function disposeThumb(entry) {
   });
 }
 
-// The mesh + edges for a universe's current shape, rebuilt only when
-// that shape has changed.
-function thumbFor(universe) {
-  const shape = universeShape(universe);
+function forgetThumb(universe) {
+  const cached = thumbCache.get(universe);
+  if (cached) disposeThumb(cached);
+  thumbCache.delete(universe);
+}
+
+// Draws a universe's shape, turned by `quaternion`, onto a 2D canvas.
+function drawThumb(universe, quaternion, ctx, canvas, shape) {
+  const thumb = thumbFor(universe, shape);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (thumb.objects.length === 0) return;
+  thumbHolder.clear();
+  thumb.objects.forEach((o) => thumbHolder.add(o));
+  thumbHolder.quaternion.copy(quaternion);
+  // Far enough back that the shape's bounding sphere fits the frame.
+  thumbCamera.position.set(0, 0, thumb.size * 3.6);
+  thumbCamera.lookAt(0, 0, 0);
+  thumbRenderer.render(thumbScene, thumbCamera);
+  ctx.drawImage(thumbRenderer.domElement, 0, 0, canvas.width, canvas.height);
+}
+
+// The mesh + edges for a universe's current shape (or `shape`, e.g. a
+// preview of it), rebuilt only when that shape has changed.
+function thumbFor(universe, shape = universeShape(universe)) {
   const cached = thumbCache.get(universe);
   if (cached && cached.shape === shape) return cached;
   if (cached) disposeThumb(cached);
@@ -67,7 +87,7 @@ function thumbFor(universe) {
     objects.push(new THREE.Mesh(geometry, material));
     objects.push(
       new THREE.LineSegments(
-        new THREE.EdgesGeometry(geometry),
+        faceEdgeLines(geometry),
         new THREE.LineBasicMaterial({ color: 0x9fd3ff }),
       ),
     );
@@ -80,20 +100,12 @@ function thumbFor(universe) {
 function renderThumbs() {
   if (!multiverseOpen) return;
   requestAnimationFrame(renderThumbs);
-  const spin = performance.now() * 0.0006;
-  mvPlaques.forEach(({ universe, canvas, ctx }) => {
-    const thumb = thumbFor(universe);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (thumb.objects.length === 0) return;
-    thumbHolder.clear();
-    thumb.objects.forEach((o) => thumbHolder.add(o));
-    thumbHolder.rotation.set(0.45, spin, 0);
-    // Far enough back that the shape's bounding sphere fits the frame.
-    thumbCamera.position.set(0, 0, thumb.size * 3.6);
-    thumbCamera.lookAt(0, 0, 0);
-    thumbRenderer.render(thumbScene, thumbCamera);
-    ctx.drawImage(thumbRenderer.domElement, 0, 0, canvas.width, canvas.height);
-  });
+  const spin = new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(0.45, performance.now() * 0.0006, 0),
+  );
+  mvPlaques.forEach(({ universe, canvas, ctx }) =>
+    drawThumb(universe, spin, ctx, canvas),
+  );
 }
 
 // Each universe's grid position: leaves take one row each, top to
@@ -156,6 +168,17 @@ function buildPlaque(universe, x, y) {
     here.textContent = "you are here";
     head.appendChild(here);
   }
+  const tools = document.createElement("span");
+  tools.className = "universeTools";
+  tools.appendChild(pinButton(universe));
+  if (universe.parent)
+    tools.appendChild(
+      deleteButton(universe, () => {
+        renderMultiverseMap();
+        scrollToUniverse(activeUniverse);
+      }),
+    );
+  head.appendChild(tools);
 
   const canvas = document.createElement("canvas");
   canvas.className = "plaqueThumb";
@@ -213,7 +236,8 @@ function buildPlaque(universe, x, y) {
     closeMultiverse();
   });
   plaque.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") plaque.click();
+    // Enter on one of its buttons is that button's, not the plaque's
+    if (e.key === "Enter" && e.target === plaque) plaque.click();
   });
 
   mvPlaques.push({
@@ -223,6 +247,44 @@ function buildPlaque(universe, x, y) {
     el: plaque,
   });
   return plaque;
+}
+
+// A universe's delete button (on its plaque, and on its card in the
+// children strip): the first click asks, a second within a few seconds
+// deletes the universe and everything branched from it, then calls
+// `afterDelete`.
+function deleteButton(universe, afterDelete) {
+  const btn = document.createElement("button");
+  btn.className = "plaqueDelete";
+  btn.textContent = "\u00d7";
+  btn.title = "Delete this universe";
+  let disarm = null;
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!btn.classList.contains("armed")) {
+      let count = 0;
+      (function walk(u) {
+        count++;
+        u.children.forEach(walk);
+      })(universe);
+      btn.classList.add("armed");
+      btn.textContent = count > 1 ? "Delete all " + count + "?" : "Delete?";
+      btn.title =
+        count > 1
+          ? "Also deletes the " + (count - 1) + " universe(s) branched from it"
+          : "Click again to delete";
+      disarm = setTimeout(() => {
+        btn.classList.remove("armed");
+        btn.textContent = "\u00d7";
+        btn.title = "Delete this universe";
+      }, 3000);
+      return;
+    }
+    clearTimeout(disarm);
+    deleteUniverse(universe);
+    if (afterDelete) afterDelete();
+  });
+  return btn;
 }
 
 function renderMultiverseMap() {

@@ -723,10 +723,22 @@ function startStellationSession(regions) {
 }
 
 // The cells currently making up a face that can still be grown.
+// A map's cells grouped by face, worked out once per map (a big map has
+// hundreds of thousands of cells; scanning them all for every face adds up).
+function stellCellsOfFace(regions, face) {
+  if (!regions.cellsByFace) {
+    regions.cellsByFace = new Map();
+    regions.forEach((r) => {
+      if (!regions.cellsByFace.has(r.face)) regions.cellsByFace.set(r.face, []);
+      regions.cellsByFace.get(r.face).push(r);
+    });
+  }
+  return regions.cellsByFace.get(face) || [];
+}
+
 function stellFaceFootprint(regions, face) {
-  return regions.filter(
+  return stellCellsOfFace(regions, face).filter(
     (r) =>
-      r.face === face &&
       r.on &&
       r.isOriginal &&
       !r.addedThisSession &&
@@ -823,11 +835,8 @@ function stellFinishShape(result) {
 // face numbers, so it means the same thing on any shape. Returns false
 // if some face can't grow (e.g. it's already the last stellation).
 function stellGrowAllFaces(regions, mergeGroups) {
-  const faces = [];
-  regions.forEach((r) => {
-    if (!faces.includes(r.face)) faces.push(r.face);
-  });
-  for (const face of faces) {
+  stellCellsOfFace(regions, 0);
+  for (const face of regions.cellsByFace.keys()) {
     if (stellFaceFootprint(regions, face).length === 0) continue;
     if (!stellGrowFace(regions, mergeGroups, face)) return false;
   }

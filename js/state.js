@@ -89,7 +89,7 @@ function setFaceGeometry(geometry) {
   shapeGroup.add(mesh);
   faceMeshObjects.push(mesh);
 
-  const edgesGeo = new THREE.EdgesGeometry(geometry);
+  const edgesGeo = faceEdgeLines(geometry);
   const edges = new THREE.LineSegments(
     edgesGeo,
     new THREE.LineBasicMaterial({ color: 0x9fd3ff }),
