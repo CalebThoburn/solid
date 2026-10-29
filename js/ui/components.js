@@ -1,7 +1,8 @@
 // ---------------------------------------------------------------
 // Components: a box of saved polyhedra on the left. Save the current
-// shape, load a saved one, or ADD one to the current shape to make a
-// compound (the two overlaid as one shape).
+// shape, load a saved one, or ADD one to the current shape: corners in
+// the same place merge, so face sets whose edges line up join into one
+// shape (see the tags below for which ones close up together).
 // ---------------------------------------------------------------
 const componentList = document.getElementById("componentList");
 const componentsEmpty = document.getElementById("componentsEmpty");
@@ -37,6 +38,89 @@ function polyhedronCounts(comp) {
   );
 }
 
+// ---------------------------------------------------------------
+// Tags: which edges a component has, and how many of its faces meet at
+// each. Components with exactly the same edges share a letter, and the
+// box is sorted by it, so partners sit together; a component also lists
+// the others that would close it up (every edge then in exactly two
+// faces - e.g. 12 pentagrams + 10 hexagons on the same 30 points).
+// Edges are compared by where their ends are, so components saved from
+// different shapes still match up.
+// ---------------------------------------------------------------
+function componentEdgeUse(comp) {
+  if (comp.edgeUse) return comp.edgeUse;
+  const pointKey = (v) => v.x.toFixed(5) + "," + v.y.toFixed(5) + "," + v.z.toFixed(5);
+  const keys = comp.verts.map(pointKey);
+  const use = new Map();
+  comp.faces.forEach((f) =>
+    f.forEach((a, i) => {
+      const ka = keys[a],
+        kb = keys[f[(i + 1) % f.length]];
+      const key = ka < kb ? ka + "|" + kb : kb + "|" + ka;
+      use.set(key, (use.get(key) || 0) + 1);
+    }),
+  );
+  comp.edgeUse = use;
+  comp.edgeSetKey = Array.from(use.keys()).sort().join(";");
+  return use;
+}
+
+// "1 face per edge", "2 faces per edge (closed)", or a mix.
+function facesPerEdgeLabel(use) {
+  const counts = new Set(use.values());
+  if (counts.size === 1) {
+    const c = counts.values().next().value;
+    return c === 2 ? "closed \u00b7 2 faces per edge" : c + " face" + (c === 1 ? "" : "s") + " per edge";
+  }
+  return "mixed: " + Array.from(counts).sort().join("/") + " faces per edge";
+}
+
+// Would adding b to a leave every edge in exactly two faces?
+function componentsClose(a, b) {
+  const ua = componentEdgeUse(a),
+    ub = componentEdgeUse(b);
+  for (const [k, c] of ua) if (c + (ub.get(k) || 0) !== 2) return false;
+  for (const [k, c] of ub) if (!ua.has(k) && c !== 2) return false;
+  return true;
+}
+
+const EDGE_TAG_COLORS = ["#5ec8ff", "#e0a030", "#9be07a", "#e05a8a", "#b48cff", "#ffd166", "#5fd3c4", "#ff8a65"];
+
+// Components in display order, each with { comp, letter, color, closesWith }.
+function taggedComponents() {
+  components.forEach(componentEdgeUse);
+  // edge sets, lettered in order of fewest edges first
+  const sets = Array.from(new Set(components.map((c) => c.edgeSetKey))).sort(
+    (x, y) => componentEdgeUse(components.find((c) => c.edgeSetKey === x)).size -
+      componentEdgeUse(components.find((c) => c.edgeSetKey === y)).size || (x < y ? -1 : 1),
+  );
+  const letterOf = new Map(
+    sets.map((k, i) => [k, i < 26 ? String.fromCharCode(65 + i) : "#" + (i + 1)]),
+  );
+  const isClosed = (c) => Array.from(c.edgeUse.values()).every((n) => n === 2);
+  return components
+    .map((comp) => ({
+      comp,
+      letter: letterOf.get(comp.edgeSetKey),
+      color: EDGE_TAG_COLORS[sets.indexOf(comp.edgeSetKey) % EDGE_TAG_COLORS.length],
+      // partners share at least one edge, so look among those
+      closesWith: isClosed(comp)
+        ? []
+        : components.filter(
+            (other) =>
+              other !== comp &&
+              Array.from(other.edgeUse.keys()).some((k) => comp.edgeUse.has(k)) &&
+              componentsClose(comp, other),
+          ),
+    }))
+    .sort(
+      (x, y) =>
+        sets.indexOf(x.comp.edgeSetKey) - sets.indexOf(y.comp.edgeSetKey) ||
+        (isClosed(y.comp) ? 1 : 0) - (isClosed(x.comp) ? 1 : 0) ||
+        components.indexOf(x.comp) - components.indexOf(y.comp),
+    );
+}
+
 function shapeAsComponent(shape) {
   const poly = polygonShapeOf(shape);
   if (!poly || poly.faces.length === 0) return null;
@@ -69,14 +153,14 @@ function addComponentToCurrentShape(comp) {
   }
   if (!perform({ type: "addComponent", comp: componentForAction(comp) }))
     return;
-  infoDiv.textContent = "Added " + comp.name + " to the shape as a compound";
+  infoDiv.textContent = "Added " + comp.name + " to the shape";
 }
 
 function renderComponentList() {
   componentList.innerHTML = "";
   componentsCount.textContent = "(" + components.length + ")";
   componentsEmpty.style.display = components.length ? "none" : "block";
-  components.forEach((comp, idx) => {
+  taggedComponents().forEach(({ comp, letter, color, closesWith }) => {
     const row = document.createElement("div");
     row.className = "compRow";
     const name = document.createElement("div");
@@ -85,6 +169,27 @@ function renderComponentList() {
     const meta = document.createElement("div");
     meta.className = "compMeta";
     meta.textContent = polyhedronCounts(comp);
+    const tags = document.createElement("div");
+    tags.className = "compTags";
+    const tag = (text, title, style) => {
+      const t = document.createElement("span");
+      t.className = "compTag";
+      t.textContent = text;
+      t.title = title;
+      if (style) Object.assign(t.style, style);
+      tags.appendChild(t);
+      return t;
+    };
+    tag("Edges " + letter, "Components with the same letter have exactly the same edges", {
+      color,
+      borderColor: color,
+    });
+    tag(facesPerEdgeLabel(comp.edgeUse), "How many of its faces meet at each edge");
+    if (closesWith.length)
+      tag(
+        "closes with " + closesWith.map((c) => c.name).join(", "),
+        "Adding one of these leaves every edge in exactly two faces: a closed shape",
+      ).classList.add("closes");
     const btns = document.createElement("div");
     btns.className = "compBtns";
     const mk = (label, title, fn) => {
@@ -97,18 +202,19 @@ function renderComponentList() {
     };
     mk(
       "Add",
-      "Add this polyhedron to the current shape (makes a compound)",
+      "Add this polyhedron to the current shape (shared corners and edges join up)",
       () => addComponentToCurrentShape(comp),
     );
     mk("Load", "Replace the current shape with this one", () =>
       loadComponentAsShape(comp),
     );
     mk("\u2715", "Remove from components", () => {
-      components.splice(idx, 1);
+      components.splice(components.indexOf(comp), 1);
       renderComponentList();
     });
     row.appendChild(name);
     row.appendChild(meta);
+    row.appendChild(tags);
     row.appendChild(btns);
     componentList.appendChild(row);
   });

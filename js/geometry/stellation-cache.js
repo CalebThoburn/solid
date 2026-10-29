@@ -104,7 +104,7 @@ function stellShapeSize(vertices) {
 // Records a finished stellation: each result corner as three planes,
 // plus the corners to check (see top) with the side of every plane
 // each lies on. Returns null if some corner can't be pinned to planes.
-function stellMakeRecord(regions, planes, size, result) {
+function stellMakeRecord(regions, planes, size, result, relevantCells) {
   const tol = size * 2e-4;
   const corners = [];
   for (const v of result.vertices) {
@@ -113,9 +113,10 @@ function stellMakeRecord(regions, planes, size, result) {
     corners.push(triple);
   }
 
+  // the cells the result depends on (by default, those used), and the
+  // cells next to them
   const relevant = new Set();
-  regions.forEach((r) => {
-    if (!r.on) return;
+  (relevantCells || regions.filter((r) => r.on)).forEach((r) => {
     relevant.add(r);
     r.neighbors.forEach((n) => relevant.add(n));
   });
@@ -228,25 +229,31 @@ function stellateShape(shape, action) {
   }
   if (stellFastOnly) return STELL_PENDING;
 
-  const regions = computeStellationRegions(verts, poly.faces);
-  if (regions.length === 0) return null;
-  startStellationSession(regions);
-  const mergeGroups = [];
+  let result, record;
   if (action.grows === "all") {
-    if (!stellGrowAllFaces(regions, mergeGroups)) return null;
+    // the next stellation: grown by 3D pockets (see stellateLayer)
+    const layer = stellateLayer(verts, poly.faces);
+    if (!layer) return null;
+    result = layer.result;
+    record = stellMakeRecord(layer.regions, planes, size, result, layer.relevant);
   } else {
+    // named faces grown one shell each, within their own planes
+    const regions = computeStellationRegions(verts, poly.faces);
+    if (regions.length === 0) return null;
+    startStellationSession(regions);
+    const mergeGroups = [];
     for (const face of action.grows) {
       if (!stellGrowFace(regions, mergeGroups, face)) return null;
     }
+    result = stellSessionResult(
+      regions,
+      mergeGroups,
+      poly.faces.map((_, face) => ({ face })),
+      "new",
+    );
+    if (!result) return null;
+    record = stellMakeRecord(regions, planes, size, result);
   }
-  const result = stellSessionResult(
-    regions,
-    mergeGroups,
-    poly.faces.map((_, face) => ({ face })),
-    "new",
-  );
-  if (!result) return null;
-  const record = stellMakeRecord(regions, planes, size, result);
   if (record) stellRemember(key, record);
   return customShape(
     shape,

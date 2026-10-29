@@ -22,48 +22,60 @@ function isClosedManifold(faces) {
   return true;
 }
 
-function directedEdgeMap(faces) {
-  const map = new Map();
-  faces.forEach((poly, fi) => {
-    poly.forEach((a, i) => map.set(a + "_" + poly[(i + 1) % poly.length], fi));
-  });
-  return map;
-}
-
-// Neighbours of vertex v in cyclic order around it (found by hopping
-// across shared edges, so star vertex figures work too). null if the
-// faces around v don't close up into a ring.
-function vertexRing(v, faces, edgeMap) {
-  const entries = [];
-  faces.forEach((poly, fi) => {
+// The corners next to v, in order around it, or null if the faces at v
+// don't form a single ring. Each face meeting at v links the two corners
+// on either side of v in that face; following the links goes round v.
+// This doesn't rely on faces being wound consistently, so it works on
+// one-sided shapes too - e.g. hemipolyhedra such as the great
+// dodecahemicosahedron, whose hexagons pass through the centre.
+function cornerRing(v, faces) {
+  const links = [];
+  faces.forEach((poly) => {
     const n = poly.length;
     poly.forEach((u, i) => {
-      if (u === v) entries.push({ face: fi, prev: poly[(i - 1 + n) % n] });
+      if (u === v) links.push([poly[(i - 1 + n) % n], poly[(i + 1) % n]]);
     });
   });
-  if (entries.length === 0) return [];
-  const byFace = new Map(entries.map((e) => [e.face, e]));
-  const seen = new Set();
+  if (links.length === 0) return [];
+  const linksAt = new Map();
+  links.forEach((link, li) =>
+    link.forEach((u) => {
+      if (!linksAt.has(u)) linksAt.set(u, []);
+      linksAt.get(u).push(li);
+    }),
+  );
+  for (const list of linksAt.values()) if (list.length !== 2) return null;
   const ring = [];
-  let cur = entries[0];
-  while (cur && !seen.has(cur.face)) {
-    seen.add(cur.face);
-    ring.push(cur.prev);
-    const g = edgeMap.get(v + "_" + cur.prev);
-    cur = g === undefined ? null : byFace.get(g);
+  const used = new Set();
+  let li = 0;
+  let u = links[0][0];
+  while (!used.has(li)) {
+    used.add(li);
+    ring.push(u);
+    const [a, b] = links[li];
+    u = a === u ? b : a;
+    li = linksAt.get(u).find((other) => other !== li);
   }
-  return cur === entries[0] && ring.length === entries.length ? ring : null;
+  return used.size === links.length ? ring : null;
+}
+
+// Whether a shape can be truncated as it is: every edge shared by exactly
+// two faces, and the faces at every corner forming one ring. (Its faces
+// needn't be windable all one way - one-sided shapes are fine.)
+function truncatableFaces(vertexCount, faces) {
+  if (!facesFormClosedSurface(faces)) return false;
+  for (let v = 0; v < vertexCount; v++) if (cornerRing(v, faces) === null) return false;
+  return true;
 }
 
 function truncatePolyhedron(vertices, rawFaces, t) {
   const faces = normalizeFaceWinding(vertices, rawFaces);
-  if (!isClosedManifold(faces)) {
+  if (!facesFormClosedSurface(faces)) {
     return {
       error:
         "needs a closed shape where every edge is shared by exactly two faces",
     };
   }
-  const edgeMap = directedEdgeMap(faces);
   // t is how far along each edge (as a fraction of it) the cut lands,
   // from each end: 0..0.5 truncates, 0.5 rectifies, 0.5..1 hypertruncates
   // (the cuts from the two ends cross over), past 1 quasitruncates, and
@@ -107,7 +119,7 @@ function truncatePolyhedron(vertices, rawFaces, t) {
 
   const cornerFaces = new Map();
   for (let v = 0; v < vertices.length; v++) {
-    const ring = vertexRing(v, faces, edgeMap);
+    const ring = cornerRing(v, faces);
     if (ring === null)
       return {
         error: "the faces around one of the corners don't form a closed ring",
@@ -150,7 +162,17 @@ function flattenCornerCuts(vertices, points, pointEdge, cornerFaces, rectified) 
       return;
     const planes = new Map();
     cornerFaces.forEach((face, v) => {
-      const n = newellNormal(face, points);
+      let n = newellNormal(face, points);
+      // A corner face can cross itself so that its halves cancel out
+      // (a bow tie, at the corners of a hemipolyhedron); then its
+      // diagonals still span its plane.
+      if (n.lengthSq() < 1e-12 * size * size * size * size && face.length >= 4) {
+        const half = face.length >> 1;
+        n = points[face[half]]
+          .clone()
+          .sub(points[face[0]])
+          .cross(points[face[(half + 1) % face.length]].clone().sub(points[face[1]]));
+      }
       if (n.lengthSq() < 1e-18) return;
       n.normalize();
       planes.set(v, { n, d: n.dot(faceCentroidOf(face, points)) });
@@ -188,8 +210,7 @@ function flattenCornerCuts(vertices, points, pointEdge, cornerFaces, rectified) 
 // fit on others. Null if the shape can't be truncated.
 function uniformTruncationDepths(vertices, rawFaces) {
   const faces = normalizeFaceWinding(vertices, rawFaces);
-  if (!isClosedManifold(faces)) return null;
-  const edgeMap = directedEdgeMap(faces);
+  if (!facesFormClosedSurface(faces)) return null;
   let edgeSum = 0,
     edgeCount = 0,
     gapSum = 0,
@@ -201,7 +222,7 @@ function uniformTruncationDepths(vertices, rawFaces) {
     }),
   );
   for (let v = 0; v < vertices.length; v++) {
-    const ring = vertexRing(v, faces, edgeMap);
+    const ring = cornerRing(v, faces);
     if (!ring || ring.length < 3) continue;
     ring.forEach((u, i) => {
       gapSum += vertices[u].distanceTo(vertices[ring[(i + 1) % ring.length]]);

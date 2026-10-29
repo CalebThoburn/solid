@@ -473,6 +473,32 @@ function polyhedronSignature(verts, faces) {
 
 // Combines two polyhedra into one compound: all the corners and faces of
 // both, the second's face numbers shifted past the first's corners.
+// Puts two polyhedra together as one shape, with corners at the same
+// place merged into one - so where their edges line up they become
+// shared edges, and face sets that only together go all the way round
+// (e.g. 12 pentagrams and 10 hexagons on the same 30 points: the great
+// dodecahemicosahedron) form one closed shape.
+function joinPolyhedra(a, b) {
+  const joined = combinePolyhedra(a, b);
+  let size = 0;
+  joined.verts.forEach((v) => (size = Math.max(size, v.length())));
+  const tol = Math.max(size * 1e-6, 1e-9);
+  const verts = [];
+  const index = joined.verts.map((v) => {
+    let i = verts.findIndex((q) => q.distanceTo(v) < tol);
+    if (i < 0) {
+      verts.push(v.clone());
+      i = verts.length - 1;
+    }
+    return i;
+  });
+  return {
+    verts,
+    faces: joined.faces.map((f) => f.map((i) => index[i])),
+    colors: joined.colors,
+  };
+}
+
 function combinePolyhedra(a, b) {
   const offset = a.verts.length;
   return {

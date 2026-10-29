@@ -154,15 +154,24 @@ truncBtn.addEventListener("click", () => {
   closeStellationPanel(true);
   const shape = currentPolygonShape();
   if (!shape || shape.faces.length === 0) return;
-  const probe = truncatePolyhedron(shape.verts, shape.faces, 0.25);
+  // a shape whose faces overlap is truncated as the solid it encloses
+  const src = truncationSource(
+    shape.verts,
+    shape.faces,
+    currentFacePolygons ? faceColors.slice() : null,
+  );
+  const probe = truncatePolyhedron(src.verts, src.faces, 0.25);
   if (probe.error) {
     infoDiv.textContent = "Can't truncate: " + probe.error;
     return;
   }
-  truncKnots = truncationKnots(uniformTruncationDepths(shape.verts, shape.faces));
+  if (src.solidified)
+    infoDiv.textContent =
+      "This shape's faces overlap, so it's truncated as the solid it encloses";
+  truncKnots = truncationKnots(uniformTruncationDepths(src.verts, src.faces));
   renderTruncationTicks();
-  truncSource = shape;
-  truncColors = currentFacePolygons ? faceColors.slice() : null;
+  truncSource = { verts: src.verts, faces: src.faces };
+  truncColors = src.colors;
   truncating = true;
   truncSlider.value = 0;
   truncPanel.classList.remove("hidden");

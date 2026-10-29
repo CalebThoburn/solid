@@ -12,7 +12,8 @@
 //                                           "uniform" / "quasiUniform" re-finds
 //                                           that depth on whatever shape it's on
 //   { type: "stellate", grows, color }      grows: face indices, in order,
-//                                           or "all" (next mainline stellation)
+//                                           or "all" (next mainline stellation,
+//                                           by 3D pockets: see stellateLayer)
 //   { type: "stellateCells", on, signature, color }
 //                                           on: indices of the map's cells kept
 //   { type: "reorder", faces, colors, vertexCount }
@@ -20,7 +21,8 @@
 //   { type: "resetColors" }
 //   { type: "import", data }                exported-text object
 //   { type: "loadComponent", comp }         comp: saved polyhedron
-//   { type: "addComponent", comp }
+//   { type: "addComponent", comp }         shared corners merge; two closed
+//                                           shapes that touch become one solid
 // ---------------------------------------------------------------
 function runAction(shape, action) {
   switch (action.type) {
@@ -47,21 +49,23 @@ function runAction(shape, action) {
     case "truncate": {
       const poly = polygonShapeOf(shape);
       if (!poly || poly.faces.length === 0) return null;
+      // a shape whose faces overlap is truncated as the solid it encloses
+      const src = truncationSource(
+        poly.verts,
+        poly.faces,
+        shape.facePolygons ? shape.faceColors : null,
+      );
       let t = action.t;
       if (action.preset) {
-        const depths = uniformTruncationDepths(poly.verts, poly.faces);
+        const depths = uniformTruncationDepths(src.verts, src.faces);
         if (!depths) return null;
         t = action.preset === "uniform" ? depths.truncate : depths.quasi;
         if (t === null) return null;
       }
-      const result = truncatePolyhedron(poly.verts, poly.faces, t);
+      const result = truncatePolyhedron(src.verts, src.faces, t);
       if (result.error) return null;
       const pruned = pruneUnusedVertices(result.vertices, result.faces);
-      const colors = carryColors(
-        result.origin,
-        shape.facePolygons ? shape.faceColors : null,
-        action.color,
-      );
+      const colors = carryColors(result.origin, src.colors, action.color);
       return customShape(shape, pruned.vertices, pruned.faces, null, colors);
     }
 
@@ -135,7 +139,19 @@ function runAction(shape, action) {
     case "addComponent": {
       const base = shapeAsComponent(shape);
       if (!base) return null;
-      const merged = combinePolyhedra(base, action.comp);
+      let merged = joinPolyhedra(base, action.comp);
+      // Two shapes that are each closed and touch become one solid: faces
+      // where they meet, and any overlap, are removed (two hollow shapes,
+      // one solid inside). Open face sets just join edge to edge.
+      if (
+        facesFormClosedSurface(base.faces) &&
+        facesFormClosedSurface(action.comp.faces) &&
+        polyhedraSharePoint(base, action.comp)
+      ) {
+        const solid = solidifyPolyhedron(merged.verts, merged.faces, merged.colors);
+        if (solid)
+          merged = { verts: solid.vertices, faces: solid.faces, colors: solid.colors };
+      }
       return customShape(
         shape,
         merged.verts,

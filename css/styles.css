@@ -232,6 +232,26 @@ body {
   color: #dbe2f0;
   font-size: 13px;
 }
+.compTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 3px 0 4px;
+}
+.compTag {
+  font-size: 10px;
+  color: #c6cfdf;
+  background: #1c2434;
+  border: 1px solid #2a3446;
+  border-radius: 4px;
+  padding: 0 5px;
+  white-space: nowrap;
+}
+.compTag.closes {
+  color: #9be07a;
+  border-color: #3d6b33;
+  white-space: normal;
+}
 .compMeta {
   color: #8a94a8;
   font-size: 11px;

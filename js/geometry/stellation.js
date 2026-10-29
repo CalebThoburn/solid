@@ -829,20 +829,6 @@ function stellFinishShape(result) {
   };
 }
 
-// Grows every face by one shell at once: the next stellation along the
-// main line (dodecahedron -> small stellated dodecahedron -> great
-// dodecahedron -> great stellated dodecahedron). It's described without
-// face numbers, so it means the same thing on any shape. Returns false
-// if some face can't grow (e.g. it's already the last stellation).
-function stellGrowAllFaces(regions, mergeGroups) {
-  stellCellsOfFace(regions, 0);
-  for (const face of regions.cellsByFace.keys()) {
-    if (stellFaceFootprint(regions, face).length === 0) continue;
-    if (!stellGrowFace(regions, mergeGroups, face)) return false;
-  }
-  return mergeGroups.length > 0;
-}
-
 // ---------------------------------------------------------------
 // Picking cells by hand. Each face's diagram is cut into cells; any set
 // of switched-on cells can be built into a shape. To keep the shape
