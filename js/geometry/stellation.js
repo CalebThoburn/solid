@@ -1010,45 +1010,63 @@ function stellSelectionGroups(regions) {
 }
 
 // Does `loop` draw exactly the cells of `group`? It has to cover each
-// of the face's cells that's in the group and none that isn't, and be
-// drawable as a fan from its centre (how faces are rendered) - which
-// holds when every edge turns the same way around that centre.
+// of the face's cells that's in the group and none that isn't. (Any
+// such outline can be drawn: faces a fan from the centre can't draw are
+// filled by winding - see polygonToTriangleVerts.)
 function stellLoopMatchesGroup(loop, group, faceCells) {
   if (loop.length < 3) return false;
-  let cx = 0,
-    cy = 0;
-  loop.forEach((q) => {
-    cx += q.x;
-    cy += q.y;
-  });
-  cx /= loop.length;
-  cy /= loop.length;
-  let sign = 0;
-  for (let i = 0; i < loop.length; i++) {
-    const a = loop[i],
-      b = loop[(i + 1) % loop.length];
-    const cross = (a.x - cx) * (b.y - cy) - (a.y - cy) * (b.x - cx);
-    if (Math.abs(cross) < 1e-12) continue;
-    if (sign === 0) sign = Math.sign(cross);
-    else if (Math.sign(cross) !== sign) return false;
-  }
   const inGroup = new Set(group);
   return faceCells.every(
     (c) => stellWindingContains(loop, c.mid2D) === inGroup.has(c),
   );
 }
 
+// Is a group of cells one piece with no holes - so its outline traced
+// once is exactly the group? (A single outline's area is the group's
+// area exactly when nothing is missing from inside it.)
+function stellPieceIsSimple(cells) {
+  if (cells.length === 1) return true;
+  const loop = mergeFaceCellGroup(cells);
+  if (loop.length < 3) return false;
+  const area = cells.reduce((sum, c) => sum + stellPolyArea(c.poly2D), 0);
+  return Math.abs(stellPolyArea(loop) - area) <= area * 1e-6;
+}
+
+// Splits a group that isn't one simple piece (a ring of cells round a
+// hole can't be one face) into as few simple pieces as it can: each
+// piece grows cell by cell for as long as it stays without holes.
+function stellSimplePieces(group) {
+  const left = new Set(group);
+  const pieces = [];
+  while (left.size) {
+    const seed = left.values().next().value;
+    left.delete(seed);
+    const piece = [seed];
+    for (let i = 0; i < piece.length; i++) {
+      for (const n of piece[i].neighbors) {
+        if (!left.has(n)) continue;
+        piece.push(n);
+        if (stellPieceIsSimple(piece)) left.delete(n);
+        else piece.pop();
+      }
+    }
+    pieces.push(piece);
+  }
+  return pieces;
+}
+
 // The outlines a group of same-face cells is built from: one face when
 // its outline (preferably reduced to true corners, as a pentagram is)
-// draws it correctly, otherwise each cell on its own - e.g. a ring of
-// cells around a hole can't be one face.
+// draws it, otherwise - a group round a hole - as few faces as possible.
 function stellGroupLoops(group, faceCells) {
   if (group.length === 1) return [group[0].poly2D.slice()];
   const loop = mergeFaceCellGroup(group);
   const reduced = stellReduceToCorners(loop);
   if (stellLoopMatchesGroup(reduced, group, faceCells)) return [reduced];
   if (stellLoopMatchesGroup(loop, group, faceCells)) return [loop];
-  return group.map((c) => c.poly2D.slice());
+  return stellSimplePieces(group).map((piece) =>
+    piece.length === 1 ? piece[0].poly2D.slice() : mergeFaceCellGroup(piece),
+  );
 }
 
 // The polyhedron the switched-on cells make. A face made only of the

@@ -21,18 +21,25 @@ let stellRegions = null;
 let stellOrbits = []; // orbit id -> the cells switched together
 let stellFaceTypes = []; // [{ rep, faces }]
 let stellCellEls = []; // [{ region, el }] for every drawn diagram cell
+let stellDiagramViews = []; // per diagram: { cellsOf: orbit -> cells, outline }
 let stellHoverOrbit = -1;
-let stellObjects = [];
+let stellObjects = []; // the preview: shape, faint cell lines
+let stellHoverObjects = []; // the glowing outline of the hovered orbit
 let stellOriginalColors = null; // faceColors as they were before this session
 let stellResult = null; // the shape the current selection builds
 
-function clearStellObjects() {
-  stellObjects.forEach((o) => {
+function disposeStellObjects(list) {
+  list.forEach((o) => {
     shapeGroup.remove(o);
     if (o.geometry) o.geometry.dispose();
     if (o.material) o.material.dispose();
   });
+}
+function clearStellObjects() {
+  disposeStellObjects(stellObjects);
+  disposeStellObjects(stellHoverObjects);
   stellObjects = [];
+  stellHoverObjects = [];
   stellGlowMaterials = [];
 }
 
@@ -54,11 +61,11 @@ function stellLineGeometry(points) {
   geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   return geo;
 }
-function stellAddLines(points, material) {
+function stellAddLines(points, material, list = stellObjects) {
   if (!points.length) return;
   const lines = new THREE.LineSegments(stellLineGeometry(points), material);
   shapeGroup.add(lines);
-  stellObjects.push(lines);
+  list.push(lines);
 }
 
 function stellSelectionChanged() {
@@ -124,6 +131,16 @@ function renderStellationView() {
     }),
   );
 
+  renderStellHover();
+  updateStellStatus(result);
+}
+
+// Just the hovered orbit's glow - redrawn on its own as the mouse moves
+// over the diagrams, without rebuilding the previewed shape.
+function renderStellHover() {
+  disposeStellObjects(stellHoverObjects);
+  stellHoverObjects = [];
+  stellGlowMaterials = [];
   if (stellHoverOrbit >= 0) {
     const pts = [];
     stellOrbits[stellHoverOrbit].forEach((r) =>
@@ -141,12 +158,10 @@ function renderStellationView() {
       transparent: true,
       opacity: 1,
     });
-    stellAddLines(pts, haloMat);
-    stellAddLines(pts, sharpMat);
+    stellAddLines(pts, haloMat, stellHoverObjects);
+    stellAddLines(pts, sharpMat, stellHoverObjects);
     stellGlowMaterials = [haloMat, sharpMat];
   }
-
-  updateStellStatus(result);
 }
 
 function updateStellStatus(result) {
@@ -174,7 +189,6 @@ function refreshDiagramCells() {
   const colors = stellCellColors();
   stellCellEls.forEach(({ region, el }) => {
     el.setAttribute("fill", region.on ? colors.get(region) : "#18202e");
-    el.classList.toggle("hovered", region.orbit === stellHoverOrbit);
   });
 }
 
@@ -236,11 +250,21 @@ function buildDiagram(type, typeIndex) {
   wrap.appendChild(title);
 
   const svg = document.createElementNS(SVG_NS, "svg");
-  const setView = () =>
-    svg.setAttribute(
-      "viewBox",
-      view.x + " " + view.y + " " + view.size + " " + view.size,
-    );
+  // The hovered orbit's outline lives on its own see-through layer over
+  // the diagram, so moving the mouse only redraws that outline - not
+  // the hundreds of cells underneath.
+  const overlay = document.createElementNS(SVG_NS, "svg");
+  overlay.setAttribute("class", "stellOverlay");
+  const outline = document.createElementNS(SVG_NS, "path");
+  outline.setAttribute("class", "stellHoverOutline");
+  overlay.appendChild(outline);
+  const cellsOf = new Map();
+  stellDiagramViews.push({ cellsOf, outline });
+  const setView = () => {
+    const box = view.x + " " + view.y + " " + view.size + " " + view.size;
+    svg.setAttribute("viewBox", box);
+    overlay.setAttribute("viewBox", box);
+  };
   setView();
 
   cells
@@ -262,6 +286,8 @@ function buildDiagram(type, typeIndex) {
     el.addEventListener("click", () => toggleOrbit(r));
     svg.appendChild(el);
     stellCellEls.push({ region: r, el });
+    if (!cellsOf.has(r.orbit)) cellsOf.set(r.orbit, []);
+    cellsOf.get(r.orbit).push(r);
   });
 
   // the face as it is now, outlined
@@ -298,15 +324,24 @@ function buildDiagram(type, typeIndex) {
     { passive: false },
   );
 
-  wrap.appendChild(svg);
+  const stack = document.createElement("div");
+  stack.className = "stellDiagramStack";
+  stack.append(svg, overlay);
+  wrap.appendChild(stack);
   return wrap;
 }
 
 function setHoverOrbit(orbit) {
   if (stellHoverOrbit === orbit) return;
+  stellDiagramViews.forEach(({ cellsOf, outline }) => {
+    const cells = cellsOf.get(orbit) || [];
+    outline.setAttribute(
+      "d",
+      cells.map((r) => "M" + stellPolygonPoints(r.poly2D) + "Z").join(""),
+    );
+  });
   stellHoverOrbit = orbit;
-  refreshDiagramCells();
-  renderStellationView();
+  renderStellHover();
 }
 
 function toggleOrbit(region) {
@@ -325,6 +360,7 @@ function closeStellationPanel(restoreView) {
   stellOrbits = [];
   stellFaceTypes = [];
   stellCellEls = [];
+  stellDiagramViews = [];
   stellHoverOrbit = -1;
   stellOriginalColors = null;
   stellResult = null;
@@ -355,6 +391,7 @@ function openStellationPanel() {
   stellFaceTypes = faceTypes;
   stellOriginalColors = currentFacePolygons ? faceColors.slice() : null;
   stellCellEls = [];
+  stellDiagramViews = [];
   stellHoverOrbit = -1;
   stellActive = true;
 

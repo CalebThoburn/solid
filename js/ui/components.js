@@ -39,11 +39,16 @@ function polyhedronCounts(comp) {
 }
 
 // ---------------------------------------------------------------
-// Tags: which edges a component has, and how many of its faces meet at
-// each. Components with exactly the same edges share a letter, and the
-// box is sorted by it, so partners sit together; a component also lists
-// the others that would close it up (every edge then in exactly two
-// faces - e.g. 12 pentagrams + 10 hexagons on the same 30 points).
+// Tags: what kinds of edge a component has, and how many of its faces
+// meet at each edge of each kind - one tag per kind, e.g. "A: 1 face"
+// and "B: 2 faces". Edge kinds are shared by every component in the
+// box: two edges are the same kind when they're the same length and
+// their midpoints are the same distance from the centre (on a
+// symmetric set of points, edges the symmetry carries onto each other).
+// So components on the same points with the same kinds of edge can be
+// spotted at a glance; the box is sorted by them, and a component also
+// lists the others that would close it up - every edge then in exactly
+// two faces (e.g. 12 pentagrams + 10 hexagons on the same 30 points).
 // Edges are compared by where their ends are, so components saved from
 // different shapes still match up.
 // ---------------------------------------------------------------
@@ -51,29 +56,31 @@ function componentEdgeUse(comp) {
   if (comp.edgeUse) return comp.edgeUse;
   const pointKey = (v) => v.x.toFixed(5) + "," + v.y.toFixed(5) + "," + v.z.toFixed(5);
   const keys = comp.verts.map(pointKey);
-  const use = new Map();
+  const use = new Map(); // edge -> how many faces meet there
+  const kind = new Map(); // edge -> its kind (length and midpoint radius)
   comp.faces.forEach((f) =>
     f.forEach((a, i) => {
+      const b = f[(i + 1) % f.length];
       const ka = keys[a],
-        kb = keys[f[(i + 1) % f.length]];
+        kb = keys[b];
       const key = ka < kb ? ka + "|" + kb : kb + "|" + ka;
       use.set(key, (use.get(key) || 0) + 1);
+      if (!kind.has(key)) {
+        const p = comp.verts[a],
+          q = comp.verts[b];
+        kind.set(key, {
+          length: p.distanceTo(q),
+          radius: p.clone().add(q).multiplyScalar(0.5).length(),
+        });
+      }
     }),
   );
   comp.edgeUse = use;
-  comp.edgeSetKey = Array.from(use.keys()).sort().join(";");
+  comp.edgeKind = kind;
   return use;
 }
 
-// "1 face per edge", "2 faces per edge (closed)", or a mix.
-function facesPerEdgeLabel(use) {
-  const counts = new Set(use.values());
-  if (counts.size === 1) {
-    const c = counts.values().next().value;
-    return c === 2 ? "closed \u00b7 2 faces per edge" : c + " face" + (c === 1 ? "" : "s") + " per edge";
-  }
-  return "mixed: " + Array.from(counts).sort().join("/") + " faces per edge";
-}
+const EDGE_TAG_COLORS = ["#5ec8ff", "#e0a030", "#9be07a", "#e05a8a", "#b48cff", "#ffd166", "#5fd3c4", "#ff8a65"];
 
 // Would adding b to a leave every edge in exactly two faces?
 function componentsClose(a, b) {
@@ -84,41 +91,64 @@ function componentsClose(a, b) {
   return true;
 }
 
-const EDGE_TAG_COLORS = ["#5ec8ff", "#e0a030", "#9be07a", "#e05a8a", "#b48cff", "#ffd166", "#5fd3c4", "#ff8a65"];
-
-// Components in display order, each with { comp, letter, color, closesWith }.
+// Components in display order, each with
+//   { comp, tags: [{ letter, color, faces }], closesWith }
 function taggedComponents() {
   components.forEach(componentEdgeUse);
-  // edge sets, lettered in order of fewest edges first
-  const sets = Array.from(new Set(components.map((c) => c.edgeSetKey))).sort(
-    (x, y) => componentEdgeUse(components.find((c) => c.edgeSetKey === x)).size -
-      componentEdgeUse(components.find((c) => c.edgeSetKey === y)).size || (x < y ? -1 : 1),
-  );
-  const letterOf = new Map(
-    sets.map((k, i) => [k, i < 26 ? String.fromCharCode(65 + i) : "#" + (i + 1)]),
-  );
-  const isClosed = (c) => Array.from(c.edgeUse.values()).every((n) => n === 2);
-  return components
-    .map((comp) => ({
-      comp,
-      letter: letterOf.get(comp.edgeSetKey),
-      color: EDGE_TAG_COLORS[sets.indexOf(comp.edgeSetKey) % EDGE_TAG_COLORS.length],
-      // partners share at least one edge, so look among those
-      closesWith: isClosed(comp)
-        ? []
-        : components.filter(
-            (other) =>
-              other !== comp &&
-              Array.from(other.edgeUse.keys()).some((k) => comp.edgeUse.has(k)) &&
-              componentsClose(comp, other),
-          ),
-    }))
-    .sort(
-      (x, y) =>
-        sets.indexOf(x.comp.edgeSetKey) - sets.indexOf(y.comp.edgeSetKey) ||
-        (isClosed(y.comp) ? 1 : 0) - (isClosed(x.comp) ? 1 : 0) ||
-        components.indexOf(x.comp) - components.indexOf(y.comp),
+  // Every kind of edge in the box, lettered shortest first.
+  const kinds = [];
+  const kindOf = (k) => {
+    const tol = 1e-4 * Math.max(k.length, k.radius, 1);
+    let found = kinds.find(
+      (x) => Math.abs(x.length - k.length) < tol && Math.abs(x.radius - k.radius) < tol,
     );
+    if (!found) {
+      found = { length: k.length, radius: k.radius };
+      kinds.push(found);
+    }
+    return found;
+  };
+  components.forEach((c) => c.edgeKind.forEach((k) => kindOf(k)));
+  kinds.sort((x, y) => x.length - y.length || x.radius - y.radius);
+  kinds.forEach((k, i) => {
+    k.letter = i < 26 ? String.fromCharCode(65 + i) : "#" + (i + 1);
+    k.color = EDGE_TAG_COLORS[i % EDGE_TAG_COLORS.length];
+    k.order = i;
+  });
+
+  const entries = components.map((comp) => {
+    // one tag per (kind of edge, faces at each edge of that kind)
+    const tags = new Map();
+    comp.edgeUse.forEach((faces, edge) => {
+      const k = kindOf(comp.edgeKind.get(edge));
+      const id = k.letter + ":" + faces;
+      if (!tags.has(id)) tags.set(id, { letter: k.letter, color: k.color, order: k.order, faces, edges: 0 });
+      tags.get(id).edges++;
+    });
+    const list = Array.from(tags.values()).sort((x, y) => x.order - y.order || x.faces - y.faces);
+    return { comp, tags: list, sortKey: list.map((t) => t.letter + t.faces).join(" ") };
+  });
+  const isClosed = (c) => Array.from(c.edgeUse.values()).every((n) => n === 2);
+  entries.forEach((e) => {
+    // partners share at least one edge, so look among those
+    e.closesWith = isClosed(e.comp)
+      ? []
+      : components.filter(
+          (other) =>
+            other !== e.comp &&
+            Array.from(other.edgeUse.keys()).some((k) => e.comp.edgeUse.has(k)) &&
+            componentsClose(e.comp, other),
+        );
+  });
+  // Sorted by kinds of edge (then faces at each), so components on the
+  // same edges sit together; ties keep the order they were added in.
+  const kindsKey = (e) => e.tags.map((t) => String.fromCharCode(65 + t.order)).join("");
+  return entries.sort(
+    (x, y) =>
+      (kindsKey(x) < kindsKey(y) ? -1 : kindsKey(x) > kindsKey(y) ? 1 : 0) ||
+      (x.sortKey < y.sortKey ? -1 : x.sortKey > y.sortKey ? 1 : 0) ||
+      components.indexOf(x.comp) - components.indexOf(y.comp),
+  );
 }
 
 function shapeAsComponent(shape) {
@@ -160,7 +190,7 @@ function renderComponentList() {
   componentList.innerHTML = "";
   componentsCount.textContent = "(" + components.length + ")";
   componentsEmpty.style.display = components.length ? "none" : "block";
-  taggedComponents().forEach(({ comp, letter, color, closesWith }) => {
+  taggedComponents().forEach(({ comp, tags: edgeTags, closesWith }) => {
     const row = document.createElement("div");
     row.className = "compRow";
     const name = document.createElement("div");
@@ -180,11 +210,20 @@ function renderComponentList() {
       tags.appendChild(t);
       return t;
     };
-    tag("Edges " + letter, "Components with the same letter have exactly the same edges", {
-      color,
-      borderColor: color,
-    });
-    tag(facesPerEdgeLabel(comp.edgeUse), "How many of its faces meet at each edge");
+    edgeTags.forEach((t) =>
+      tag(
+        t.letter + ": " + t.faces + " face" + (t.faces === 1 ? "" : "s"),
+        t.edges +
+          " edge" +
+          (t.edges === 1 ? "" : "s") +
+          " of kind " +
+          t.letter +
+          ", each with " +
+          t.faces +
+          " of this shape's faces on it (kinds are shared across the box: same length, same distance from the centre)",
+        { color: t.color, borderColor: t.color },
+      ),
+    );
     if (closesWith.length)
       tag(
         "closes with " + closesWith.map((c) => c.name).join(", "),

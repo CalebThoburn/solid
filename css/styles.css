@@ -412,6 +412,7 @@ body.painting canvas:active {
   font-size: 12px;
 }
 .stellDiagram svg {
+  box-sizing: border-box; /* so the hover layer lines up exactly */
   width: 100%;
   aspect-ratio: 1;
   background: #0b0e14;
@@ -425,10 +426,24 @@ body.painting canvas:active {
   vector-effect: non-scaling-stroke;
   cursor: pointer;
 }
-.stellCell:hover,
-.stellCell.hovered {
+.stellDiagramStack {
+  position: relative;
+}
+.stellDiagramStack .stellOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: none;
+  border-color: transparent;
+  will-change: transform; /* its own layer: redrawn alone */
+}
+.stellHoverOutline {
+  fill: rgba(255, 209, 102, 0.12);
   stroke: #ffd166;
   stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 .stellCell.unbounded {
   fill: #0b0e14;

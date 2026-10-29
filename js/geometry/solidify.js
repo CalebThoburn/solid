@@ -49,7 +49,7 @@ function dropStraightCorners(vertices, faces) {
 
 // The outline(s) one group of joined surface cells becomes: the group's
 // whole outline when it traces exactly those cells, otherwise (a group
-// around a hole) each cell on its own. Unlike stellation's outlines,
+// around a hole) as few simple pieces as possible. Unlike stellation's outlines,
 // every point along each side is kept, so neighbouring faces' sides
 // match point for point; points that turn out to be straight in every
 // face are dropped afterwards (dropStraightCorners).
@@ -60,7 +60,10 @@ function solidGroupLoops(group, faceCells) {
   const exact =
     loop.length >= 3 &&
     faceCells.every((c) => stellWindingContains(loop, c.mid2D) === inGroup.has(c));
-  return exact ? [loop] : group.map((c) => c.poly2D.slice());
+  if (exact) return [loop];
+  return stellSimplePieces(group).map((piece) =>
+    piece.length === 1 ? piece[0].poly2D.slice() : mergeFaceCellGroup(piece),
+  );
 }
 
 // The pockets a set of faces divides space into, and which of them the
@@ -290,10 +293,11 @@ function solidifyPolyhedron(vertices, faces, colors) {
 // The next stellation along the main line, by 3D pockets: the solid
 // grows by every pocket that shares a side with it (all of them, all
 // round - which is what keeps the result one clean solid), and each
-// face becomes its plane's old face together with whatever of that
-// plane is newly on the surface. So the pentagons of a dodecahedron
-// gain the 5 tips around them and become pentagrams: the small
-// stellated dodecahedron, not its 60 visible triangles. Returns null if
+// face becomes its plane's whole slice through the new solid: its old
+// face together with whatever of that plane is newly on the surface,
+// and any part buried inside. So the pentagons of a dodecahedron gain
+// the 5 tips around them and become pentagrams: the small stellated
+// dodecahedron, not its 60 visible triangles. Returns null if
 // it can't stellate (a pocket it would need runs off to infinity, as
 // past a great stellated dodecahedron or round a cube). Faces come back
 // with colour tokens: { face } for a face that's unchanged, "new" for
@@ -317,10 +321,13 @@ function stellateLayer(vertices, faces) {
   if (grown.size === 0) return null;
   const inNext = (pocket) => grown.has(pocket) || isInside(pocket);
 
+  // Each face is its plane's whole slice through the new solid: every
+  // cell with the solid on at least one side - so its old self (now
+  // perhaps buried) and whatever is newly on the surface, and also any
+  // cells buried deep inside, which would otherwise leave holes in it.
   regions.forEach((r) => {
     r.previous = r.cover >= 0;
-    r.surface = !r.unbounded && inNext(r.front) !== inNext(r.back);
-    r.on = r.previous || r.surface;
+    r.on = r.previous || (!r.unbounded && (inNext(r.front) || inNext(r.back)));
   });
 
   const loops = joinCellsIntoFaces(byPlane, () => true, stellGroupLoops).map(
