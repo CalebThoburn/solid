@@ -1,4 +1,3977 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>3D Point Viewer</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0b0e14;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+  #topCenter {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+  }
+  #topCenter button {
+    background: rgba(20, 24, 34, 0.75);
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #topCenter button:hover:not(:disabled) {
+    background: #1c2434;
+    border-color: #3a4a63;
+  }
+  #topCenter button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  #topLeft {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  #settingsBtn {
+    background: rgba(20, 24, 34, 0.75);
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #settingsBtn:hover {
+    background: #1c2434;
+    border-color: #3a4a63;
+  }
+  #settingsPanel {
+    background: rgba(20, 24, 34, 0.85);
+    border: 1px solid #263042;
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #dbe2f0;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 170px;
+  }
+  #settingsPanel.hidden {
+    display: none;
+  }
+  #settingsPanel label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  #info {
+    color: #cfd6e4;
+    font-size: 13px;
+    line-height: 1.5;
+    background: rgba(20, 24, 34, 0.6);
+    padding: 8px 12px;
+    border-radius: 8px;
+    pointer-events: none;
+    user-select: none;
+    max-width: 260px;
+  }
+  #menu {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(20, 24, 34, 0.75);
+    border: 1px solid #263042;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 200px;
+  }
+  .sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background: none;
+    border: none;
+    margin: 0 0 2px 0;
+    padding: 2px 0;
+    color: #cfd6e4;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.75;
+    cursor: pointer;
+  }
+  .sectionHeader:hover {
+    opacity: 1;
+  }
+  .sectionBody {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sectionBody.hidden {
+    display: none;
+  }
+  #menu button {
+    background: #151b28;
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  #menu button:hover {
+    background: #1c2434;
+    border-color: #3a4a63;
+  }
+  #menu button.active {
+    background: #22406b;
+    border-color: #5ec8ff;
+    color: #ffffff;
+  }
+  #menu button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  #solidSubmenu {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-left: 10px;
+    border-left: 2px solid #263042;
+    margin-left: 4px;
+  }
+  #solidSubmenu.hidden {
+    display: none;
+  }
+  #uniformBtn.hidden,
+  #allReorderBtn.hidden {
+    display: none;
+  }
+  #componentsPanel {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    width: 250px;
+    max-height: 46vh;
+    overflow-y: auto;
+    background: rgba(20, 24, 34, 0.82);
+    border: 1px solid #263042;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 5;
+  }
+  #componentList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  #componentsEmpty {
+    color: #8a94a8;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .compBtn {
+    background: #151b28;
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 6px;
+    padding: 7px 9px;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .compBtn:hover {
+    background: #1c2434;
+    border-color: #3a4a63;
+  }
+  .compRow {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 8px;
+    background: rgba(21, 27, 40, 0.8);
+    border: 1px solid #263042;
+    border-radius: 8px;
+  }
+  .compName {
+    color: #dbe2f0;
+    font-size: 13px;
+  }
+  .compMeta {
+    color: #8a94a8;
+    font-size: 11px;
+  }
+  .compBtns {
+    display: flex;
+    gap: 6px;
+  }
+  .compBtns .compBtn {
+    flex: 1;
+    text-align: center;
+    padding: 4px 6px;
+  }
+  #hexInput {
+    width: 100%;
+    box-sizing: border-box;
+    background: #0d1119;
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 12px;
+  }
+  #recentLabel {
+    color: #8a94a8;
+    font-size: 11px;
+  }
+  #colorInput {
+    width: 100%;
+    height: 34px;
+    padding: 0;
+    border: 1px solid #263042;
+    border-radius: 6px;
+    background: #151b28;
+    cursor: pointer;
+  }
+  #recentColors {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    min-height: 26px;
+  }
+  #recentColors button {
+    height: 26px;
+    padding: 0;
+    border: 2px solid #263042;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #recentColors button.selected {
+    border-color: #ffffff;
+  }
+  body.painting canvas,
+  body.painting canvas:active {
+    cursor: crosshair;
+  }
+  #truncPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-left: 10px;
+    border-left: 2px solid #263042;
+    margin-left: 4px;
+  }
+  #truncPanel.hidden {
+    display: none;
+  }
+  #truncLabel {
+    color: #cfd6e4;
+    font-size: 12px;
+  }
+  #truncSlider {
+    width: 100%;
+    margin: 0;
+  }
+  #truncEnds {
+    display: flex;
+    justify-content: space-between;
+    color: #8a94a8;
+    font-size: 11px;
+  }
+  #truncButtons {
+    display: flex;
+    gap: 6px;
+  }
+  #truncButtons button {
+    flex: 1;
+    text-align: center;
+  }
+  #stellPanel {
+    position: absolute;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20, 24, 34, 0.9);
+    border: 1px solid #263042;
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: min(360px, 80vw);
+    z-index: 10;
+  }
+  #stellPanel.hidden {
+    display: none;
+  }
+  #stellPanel.hidden {
+    display: none;
+  }
+  #stellLabel {
+    color: #cfd6e4;
+    font-size: 12px;
+  }
+  #stellHint {
+    color: #8a94a8;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  #stellButtons {
+    display: flex;
+    gap: 6px;
+  }
+  #stellButtons button {
+    flex: 1;
+    text-align: center;
+  }
+  .divider {
+    height: 1px;
+    background: #263042;
+    margin: 4px 0;
+  }
+  #topCenter {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+  }
+  #topCenter button {
+    background: rgba(20, 24, 34, 0.75);
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #topCenter button:hover:not(:disabled) {
+    background: #1c2434;
+    border-color: #3a4a63;
+  }
+  #topCenter button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  #modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  #modalOverlay.hidden {
+    display: none;
+  }
+  #modalBox {
+    background: #131722;
+    border: 1px solid #2a3446;
+    border-radius: 12px;
+    padding: 16px;
+    width: min(560px, 90vw);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #modalBox h3 {
+    margin: 0;
+    color: #dbe2f0;
+    font-size: 14px;
+  }
+  #modalTextarea {
+    width: 100%;
+    height: 200px;
+    box-sizing: border-box;
+    resize: vertical;
+    background: #0d1119;
+    color: #b7ffcf;
+    border: 1px solid #263042;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  #modalStatus {
+    color: #9fd3ff;
+    font-size: 12px;
+    min-height: 14px;
+  }
+  #modalButtons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  #modalButtons button {
+    background: #151b28;
+    color: #dbe2f0;
+    border: 1px solid #263042;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #modalButtons button:hover {
+    background: #1c2434;
+    border-color: #3a4a63;
+  }
+  canvas {
+    display: block;
+    cursor: grab;
+  }
+  canvas:active {
+    cursor: grabbing;
+  }
+</style>
+</head>
+<body>
+
+<div id="topCenter">
+  <button id="undoBtn" disabled title="Undo">&#8630; Undo</button>
+  <button id="redoBtn" disabled title="Redo">Redo &#8631;</button>
+</div>
+
+<div id="stellPanel" class="hidden">
+  <div id="stellLabel">Region 0 / 0</div>
+  <div id="stellHint">Arrow keys: move between toggleable (untouched) faces &middot; Space: grow the focused face outward - it merges with the new regions into one face (shown in the selected colour) that stays locked until you Apply</div>
+  <div id="stellButtons">
+    <button id="stellApply">Apply</button>
+    <button id="stellCancel">Cancel</button>
+  </div>
+</div>
+
+<div id="topLeft">
+  <button id="settingsBtn">&#9881; Settings</button>
+  <div id="settingsPanel" class="hidden">
+    <label><input type="checkbox" id="transparentToggle" checked /> Transparent faces</label>
+  </div>
+  <div id="info">Drag to rotate &middot; Scroll to zoom</div>
+</div>
+
+<div id="menu">
+  <button class="sectionHeader" data-target="colorsBody"><span>Colors</span><span class="chevron">&#9662;</span></button>
+  <div class="sectionBody" id="colorsBody">
+    <input type="color" id="colorInput" value="#2b6fb8" title="Pick any color" />
+    <input type="text" id="hexInput" maxlength="7" spellcheck="false" title="Type a hex color" />
+    <div id="recentLabel">Recent</div>
+    <div id="recentColors"></div>
+    <button id="paintToggle">Paint faces</button>
+    <button id="resetColorsBtn">Reset colors</button>
+  </div>
+
+  <div class="divider"></div>
+  <button class="sectionHeader" data-target="actionsBody"><span>Actions</span><span class="chevron">&#9662;</span></button>
+  <div class="sectionBody" id="actionsBody">
+    <button id="dualBtn" disabled>Switch to Dual</button>
+    <button id="reorderBtn" disabled>Reorder Convex Hull</button>
+    <button id="uniformBtn" class="hidden">Create face uniformly</button>
+    <button id="allReorderBtn" class="hidden">Add all uniform reorderings to components</button>
+    <button id="truncBtn">Truncate</button>
+    <button id="stellMapBtn">Stellation Map</button>
+    <div id="truncPanel" class="hidden">
+      <div id="truncLabel">Truncation: none</div>
+      <input type="range" id="truncSlider" min="0" max="100" value="0" step="1" />
+      <div id="truncEnds"><span>None</span><span>Rectified</span></div>
+      <div id="truncButtons">
+        <button id="truncApply">Apply</button>
+        <button id="truncCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <button class="sectionHeader" data-target="dataBody"><span>Data</span><span class="chevron">&#9662;</span></button>
+  <div class="sectionBody" id="dataBody">
+    <button id="loadSolidToggle">Load Solid &#9662;</button>
+    <div id="solidSubmenu" class="hidden">
+      <button data-solid="tetrahedron">Tetrahedron</button>
+      <button data-solid="cube">Cube</button>
+      <button data-solid="octahedron">Octahedron</button>
+      <button data-solid="dodecahedron">Dodecahedron</button>
+      <button data-solid="icosahedron">Icosahedron</button>
+    </div>
+    <button id="exportBtn" disabled>Export as Text</button>
+    <button id="importBtn">Import from Text</button>
+  </div>
+</div>
+
+<div id="componentsPanel">
+  <button class="sectionHeader" data-target="componentsBody"><span>Components <span id="componentsCount">(0)</span></span><span class="chevron">&#9662;</span></button>
+  <div class="sectionBody" id="componentsBody">
+    <button id="addComponentBtn" class="compBtn">Add current shape to components</button>
+    <div id="componentList"></div>
+    <div id="componentsEmpty">Save the shape you're looking at, then combine saved shapes into a compound with Add.</div>
+  </div>
+</div>
+
+<div id="modalOverlay" class="hidden">
+  <div id="modalBox">
+    <h3 id="modalTitle">Polyhedron</h3>
+    <textarea id="modalTextarea" spellcheck="false"></textarea>
+    <div id="modalStatus"></div>
+    <div id="modalButtons">
+      <button id="modalCancelBtn">Close</button>
+      <button id="modalPrimaryBtn">Copy</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+  // Scene setup
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b0e14);
+
+  const camera = new THREE.PerspectiveCamera(
+    60,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  camera.position.set(0, 0, 10);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(window.devicePixelRatio || 1);
+  document.body.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+  dirLight.position.set(4, 6, 5);
+  scene.add(dirLight);
+
+  const worldGroup = new THREE.Group();
+  scene.add(worldGroup);
+
+  const shapeGroup = new THREE.Group();
+  worldGroup.add(shapeGroup);
+
+  const pointColorHex = 0x5ec8ff;
+  const highlightColorHex = 0xffd166;
+  let stellGlowMaterials = [];    // materials pulsed each frame in animate() for the stellation map's focused-region glow
+  const faceColorHex = 0x2b6fb8;
+  const sphereGeo = new THREE.SphereGeometry(0.09, 16, 16);
+
+  const settings = { transparent: true };
+
+  // ---------------------------------------------------------------
+  // Platonic solid definitions (used only for the five named starting
+  // shapes; once reordered, a shape becomes a general custom polyhedron)
+  // ---------------------------------------------------------------
+  const SOLID_GEOMETRIES = {
+    tetrahedron: () => new THREE.TetrahedronGeometry(2.2),
+    cube: () => new THREE.BoxGeometry(2.6, 2.6, 2.6),
+    octahedron: () => new THREE.OctahedronGeometry(2.2),
+    dodecahedron: () => new THREE.DodecahedronGeometry(1.8),
+    icosahedron: () => new THREE.IcosahedronGeometry(2.1),
+  };
+
+  const DUAL_MAP = {
+    tetrahedron: "tetrahedron",
+    cube: "octahedron",
+    octahedron: "cube",
+    dodecahedron: "icosahedron",
+    icosahedron: "dodecahedron",
+  };
+
+  function roundKey(v) {
+    return v.x.toFixed(4) + "," + v.y.toFixed(4) + "," + v.z.toFixed(4);
+  }
+
+  function uniqueVerticesFromGeometry(geometry) {
+    const posAttr = geometry.attributes.position;
+    const seen = new Set();
+    const verts = [];
+    for (let i = 0; i < posAttr.count; i++) {
+      // Rounding is only used to recognise repeats of the same corner;
+      // the stored coordinates stay unrounded. Rounding the coordinates
+      // themselves (as this used to) knocks a solid's faces slightly
+      // off true planes, and that error then compounds with every
+      // stellation.
+      const x = posAttr.getX(i);
+      const y = posAttr.getY(i);
+      const z = posAttr.getZ(i);
+      const key = x.toFixed(4) + "," + y.toFixed(4) + "," + z.toFixed(4);
+      if (!seen.has(key)) {
+        seen.add(key);
+        verts.push(new THREE.Vector3(x, y, z));
+      }
+    }
+    return verts;
+  }
+
+  // ---------------------------------------------------------------
+  // Scene state
+  // ---------------------------------------------------------------
+  let currentSolidName = null;   // name of the named solid, or null once custom
+  let currentVerts = [];         // THREE.Vector3[] - vertices of the current shape
+  let currentFacePolygons = null; // index-array[] (n-gon per face) once custom; null = "use SOLID_GEOMETRIES[currentSolidName]() directly"
+  let vertexSpheres = [];        // Mesh[] parallel to currentVerts
+  let faceMeshObjects = [];      // [Mesh, LineSegments] currently shown for faces
+  let mode = "original";         // "original" | "custom" (actively reordering)
+  let pendingFaceColors = [];    // selected colour at the moment each pending face was made
+  let vertexColorHex = [];       // colour each point is shown in while reordering (what resetSphereColor restores)
+  let globalColorHex = [];       // ...the "overall symmetry" colouring: points that are symmetrically alike share one
+  let symmetryPerms = null;      // every symmetry of the point set, as permutations (computed on entering reorder mode)
+  let colorRelative = false;     // Tab toggles: false = overall symmetry, true = as seen from the selected point
+  let lastUserFace = null;       // the last face the user made by hand (what "create face uniformly" copies)
+  let lastUserFaceColor = null;
+  let pendingFacePolygons = [];  // faces built so far in the current reorder session
+  let selectedIndices = [];      // indices selected for the face currently being built
+  let currentSolidScale = 1;     // scale applied to a named solid's raw geometry to match the previous shape's size
+  let faceColors = [];           // hex string (or null = default) per polygon face of currentFacePolygons
+  let paintColor = "#2b6fb8";    // selected colour: used for painting and for faces made by reorder / truncation
+  let painting = false;          // paint mode: clicking a face colours it
+  let dualCentre = null;         // point the last dual was reciprocated about (in current coords); reused so dual-of-dual returns the original shape
+
+  // Centre of a shape's bounding box, and its "size" = the farthest vertex
+  // from that centre. Used to re-centre and re-scale after a dual so the
+  // shape stays the centre of rotation and fills the same amount of view.
+  function boundsCentre(verts) {
+    const min = new THREE.Vector3(Infinity, Infinity, Infinity);
+    const max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
+    verts.forEach((v) => {
+      min.x = Math.min(min.x, v.x); min.y = Math.min(min.y, v.y); min.z = Math.min(min.z, v.z);
+      max.x = Math.max(max.x, v.x); max.y = Math.max(max.y, v.y); max.z = Math.max(max.z, v.z);
+    });
+    return min.add(max).multiplyScalar(0.5);
+  }
+
+  function shapeSize(verts) {
+    if (verts.length === 0) return 0;
+    const c = boundsCentre(verts);
+    let m = 0;
+    verts.forEach((v) => (m = Math.max(m, v.distanceTo(c))));
+    return m;
+  }
+
+  // Average distance of a vertex set from the origin - used as a stand-in
+  // for "how big" a shape is, so we can rescale after an operation to
+  // match the size of whatever shape was displayed before it.
+  function averageRadius(verts) {
+    if (verts.length === 0) return 0;
+    let total = 0;
+    verts.forEach((v) => (total += v.length()));
+    return total / verts.length;
+  }
+
+  function faceMaterial() {
+    return new THREE.MeshPhongMaterial({
+      color: faceColorHex,
+      transparent: settings.transparent,
+      opacity: settings.transparent ? 0.55 : 1.0,
+      side: THREE.DoubleSide,
+      shininess: 40,
+    });
+  }
+
+  function clearFaceMeshObjects() {
+    faceMeshObjects.forEach((obj) => {
+      shapeGroup.remove(obj);
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) obj.material.dispose();
+    });
+    faceMeshObjects = [];
+  }
+
+  function setFaceGeometry(geometry) {
+    clearFaceMeshObjects();
+    if (!geometry || geometry.attributes.position.count === 0) return;
+
+    const material = faceMaterial();
+    if (geometry.attributes.color) {
+      material.vertexColors = true; // per-face colours live in the geometry
+      material.color.setHex(0xffffff);
+    }
+    const mesh = new THREE.Mesh(geometry, material);
+    shapeGroup.add(mesh);
+    faceMeshObjects.push(mesh);
+
+    const edgesGeo = new THREE.EdgesGeometry(geometry);
+    const edges = new THREE.LineSegments(
+      edgesGeo,
+      new THREE.LineBasicMaterial({ color: 0x9fd3ff })
+    );
+    shapeGroup.add(edges);
+    faceMeshObjects.push(edges);
+  }
+
+  function reapplyFaceMaterialSettings() {
+    faceMeshObjects.forEach((obj) => {
+      if (obj.isMesh) {
+        obj.material.transparent = settings.transparent;
+        obj.material.opacity = settings.transparent ? 0.55 : 1.0;
+        obj.material.needsUpdate = true;
+      }
+    });
+  }
+
+  function rebuildVertexSpheres(verts) {
+    vertexColorHex = [];
+    globalColorHex = [];
+    symmetryPerms = null;
+    colorRelative = false;
+    vertexSpheres.forEach((s) => {
+      shapeGroup.remove(s);
+      s.geometry.dispose();
+      s.material.dispose();
+    });
+    vertexSpheres = verts.map((v, i) => {
+      const mat = new THREE.MeshBasicMaterial({ color: pointColorHex });
+      const sphere = new THREE.Mesh(sphereGeo, mat);
+      sphere.position.copy(v);
+      sphere.userData.index = i;
+      shapeGroup.add(sphere);
+      return sphere;
+    });
+  }
+
+  function hideAllVertexSpheres() {
+    vertexSpheres.forEach((s) => (s.visible = false));
+  }
+
+  function resetSphereColor(idx) {
+    vertexSpheres[idx].material.color.setHex(
+      vertexColorHex[idx] !== undefined ? vertexColorHex[idx] : pointColorHex
+    );
+  }
+
+  function clearAllSelectionHighlights() {
+    selectedIndices.forEach((idx) => resetSphereColor(idx));
+    selectedIndices = [];
+    if (colorRelative) recolorPoints(); // nothing selected -> back to the overall colouring
+  }
+
+  // ---------------------------------------------------------------
+  // Face-polygon <-> render-geometry helpers
+  // ---------------------------------------------------------------
+  function polygonToTriangleVerts(vertices, poly) {
+    if (poly.length === 3) {
+      return [[vertices[poly[0]], vertices[poly[1]], vertices[poly[2]]]];
+    }
+    // Fan from the polygon's centroid rather than its first vertex - this
+    // renders sensibly for both convex faces and star/self-intersecting
+    // faces (e.g. pentagrams), which a first-vertex fan would draw wrong.
+    const centroid = new THREE.Vector3();
+    poly.forEach((idx) => centroid.add(vertices[idx]));
+    centroid.divideScalar(poly.length);
+
+    const triangles = [];
+    const n = poly.length;
+    for (let i = 0; i < n; i++) {
+      const a = vertices[poly[i]];
+      const b = vertices[poly[(i + 1) % n]];
+      triangles.push([centroid, a, b]);
+    }
+    return triangles;
+  }
+
+  function geometryFromFacePolygons(vertices, facePolygons, colors) {
+    const triangles = [];
+    const triFace = []; // which polygon face each rendered triangle belongs to
+    facePolygons.forEach((poly, fi) => {
+      if (poly.length < 3) return;
+      polygonToTriangleVerts(vertices, poly).forEach((tri) => {
+        triangles.push(tri);
+        triFace.push(fi);
+      });
+    });
+    if (triangles.length === 0) return null;
+    const positions = new Float32Array(triangles.length * 9);
+    let p = 0;
+    triangles.forEach(([a, b, c]) => {
+      positions[p++] = a.x;
+      positions[p++] = a.y;
+      positions[p++] = a.z;
+      positions[p++] = b.x;
+      positions[p++] = b.y;
+      positions[p++] = b.z;
+      positions[p++] = c.x;
+      positions[p++] = c.y;
+      positions[p++] = c.z;
+    });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    if (colors && colors.some((c) => c)) {
+      const arr = new Float32Array(triangles.length * 9);
+      const tmp = new THREE.Color();
+      triFace.forEach((fi, ti) => {
+        tmp.set(colors[fi] || faceColorHex);
+        for (let k = 0; k < 3; k++) {
+          arr[ti * 9 + k * 3] = tmp.r;
+          arr[ti * 9 + k * 3 + 1] = tmp.g;
+          arr[ti * 9 + k * 3 + 2] = tmp.b;
+        }
+      });
+      geo.setAttribute("color", new THREE.BufferAttribute(arr, 3));
+    }
+    geo.userData.triFace = triFace;
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  function renderCurrentShape() {
+    if (currentFacePolygons) {
+      setFaceGeometry(geometryFromFacePolygons(currentVerts, currentFacePolygons, faceColors));
+    } else if (currentSolidName) {
+      const geometry = SOLID_GEOMETRIES[currentSolidName]();
+      geometry.scale(currentSolidScale, currentSolidScale, currentSolidScale);
+      setFaceGeometry(geometry);
+    } else {
+      setFaceGeometry(null);
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // Coplanarity check (used to restrict which points can join a face
+  // being built together - a face's points must all lie on one plane)
+  // ---------------------------------------------------------------
+  function planeFromThreePoints(a, b, c) {
+    const normal = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a));
+    if (normal.lengthSq() < 1e-8) return null; // collinear - no unique plane yet
+    normal.normalize();
+    return { normal, point: a };
+  }
+
+  function isCoplanar(plane, point, eps = 1e-3) {
+    if (!plane) return true;
+    const d = plane.normal.dot(point.clone().sub(plane.point));
+    return Math.abs(d) < eps;
+  }
+
+  function updateSelectablePoints() {
+    let plane = null;
+    if (selectedIndices.length >= 3) {
+      plane = planeFromThreePoints(
+        currentVerts[selectedIndices[0]],
+        currentVerts[selectedIndices[1]],
+        currentVerts[selectedIndices[2]]
+      );
+    }
+    vertexSpheres.forEach((sphere, idx) => {
+      if (selectedIndices.includes(idx)) {
+        sphere.visible = true;
+        return;
+      }
+      sphere.visible = plane ? isCoplanar(plane, currentVerts[idx]) : true;
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Winding-order normalization. The dual computation's edge-adjacency
+  // walk assumes every face's vertices are listed in a consistent
+  // rotational direction (all "outward", or all "inward") - if some
+  // faces were clicked in the opposite order from their neighbors,
+  // shared edges won't line up correctly and the walk misfires. Since
+  // every shape here is centered on the origin (including star
+  // polyhedra like the great dodecahedron), a face's outward direction
+  // can be checked by comparing its own normal (via Newell's method,
+  // which works for any planar polygon) against the direction from the
+  // origin to that face's centroid - this reorders/reverses faces as
+  // needed so every face is consistently wound before it's used.
+  // ---------------------------------------------------------------
+  function newellNormal(poly, vertices) {
+    const normal = new THREE.Vector3(0, 0, 0);
+    const n = poly.length;
+    for (let i = 0; i < n; i++) {
+      const cur = vertices[poly[i]];
+      const nxt = vertices[poly[(i + 1) % n]];
+      normal.x += (cur.y - nxt.y) * (cur.z + nxt.z);
+      normal.y += (cur.z - nxt.z) * (cur.x + nxt.x);
+      normal.z += (cur.x - nxt.x) * (cur.y + nxt.y);
+    }
+    return normal;
+  }
+
+  // Makes every face wind the same way as its neighbours by walking across
+  // shared edges (a neighbour that walks a shared edge in the SAME
+  // direction gets reversed), then picks the overall direction so faces
+  // point outward. This only uses which faces touch which, not where the
+  // shape sits relative to the origin, so it works for lopsided or
+  // off-centre shapes (e.g. ones with the origin on an edge or face).
+  function normalizeFaceWinding(vertices, facePolygons) {
+    const faces = facePolygons.map((f) => f.slice());
+    const edgeUsers = new Map();
+    faces.forEach((poly, fi) => {
+      poly.forEach((a, i) => {
+        const b = poly[(i + 1) % poly.length];
+        const key = a < b ? a + "_" + b : b + "_" + a;
+        if (!edgeUsers.has(key)) edgeUsers.set(key, []);
+        edgeUsers.get(key).push(fi);
+      });
+    });
+
+    function walks(fi, a, b) {
+      const poly = faces[fi];
+      for (let i = 0; i < poly.length; i++) {
+        if (poly[i] === a && poly[(i + 1) % poly.length] === b) return true;
+      }
+      return false;
+    }
+
+    const visited = new Array(faces.length).fill(false);
+    for (let s = 0; s < faces.length; s++) {
+      if (visited[s]) continue;
+      const component = [s];
+      const queue = [s];
+      visited[s] = true;
+      while (queue.length) {
+        const fi = queue.shift();
+        const poly = faces[fi];
+        for (let i = 0; i < poly.length; i++) {
+          const a = poly[i];
+          const b = poly[(i + 1) % poly.length];
+          const users = edgeUsers.get(a < b ? a + "_" + b : b + "_" + a);
+          if (!users || users.length !== 2) continue;
+          const gi = users[0] === fi ? users[1] : users[0];
+          if (gi === fi || visited[gi]) continue;
+          if (walks(gi, a, b)) faces[gi].reverse();
+          visited[gi] = true;
+          component.push(gi);
+          queue.push(gi);
+        }
+      }
+
+      // Overall direction: for a closed surface, summing normal . (centre ->
+      // face) over all faces gives 3x the signed volume, whichever
+      // reference point is used - so use the shape's own vertex centre.
+      const used = new Set();
+      component.forEach((fi) => faces[fi].forEach((v) => used.add(v)));
+      const centre = new THREE.Vector3();
+      used.forEach((v) => centre.add(vertices[v]));
+      centre.divideScalar(used.size || 1);
+
+      let score = 0;
+      component.forEach((fi) => {
+        const outward = faceCentroidOf(faces[fi], vertices).sub(centre);
+        score += newellNormal(faces[fi], vertices).dot(outward);
+      });
+      if (score < 0) component.forEach((fi) => faces[fi].reverse());
+    }
+    return faces;
+  }
+
+  function faceCentroidOf(poly, vertices) {
+    const c = new THREE.Vector3();
+    poly.forEach((idx) => c.add(vertices[idx]));
+    return c.divideScalar(poly.length);
+  }
+
+  // Drops any vertex that isn't referenced by at least one face, and
+  // remaps face indices to match the shrunk vertex list. Leftover
+  // vertices like this (e.g. cube corners not used when you reorder its
+  // hull into a bipyramid) also silently corrupt the average-radius size
+  // metric used to rescale shapes after each operation, since it's
+  // averaging in points that aren't actually part of the visible shape -
+  // pruning them keeps that (and everything downstream, like duals of
+  // duals) accurate.
+  function pruneUnusedVertices(vertices, facePolygons) {
+    const used = new Set();
+    facePolygons.forEach((poly) => poly.forEach((idx) => used.add(idx)));
+    const sortedUsed = Array.from(used).sort((a, b) => a - b);
+    const oldToNew = new Map();
+    sortedUsed.forEach((oldIdx, newIdx) => oldToNew.set(oldIdx, newIdx));
+
+    const newVertices = sortedUsed.map((idx) => vertices[idx].clone());
+    const newFaces = facePolygons.map((poly) => poly.map((idx) => oldToNew.get(idx)));
+    return { vertices: newVertices, faces: newFaces };
+  }
+
+  // How far any vertex strays from its own face's best-fit plane.
+  function maxFacePlanarity(vertices, faces) {
+    let worst = 0;
+    faces.forEach((poly) => {
+      const n = newellNormal(poly, vertices);
+      if (n.lengthSq() < 1e-18) return;
+      n.normalize();
+      const c = faceCentroidOf(poly, vertices);
+      poly.forEach((k) => {
+        worst = Math.max(worst, Math.abs(n.dot(vertices[k].clone().sub(c))));
+      });
+    });
+    return worst;
+  }
+
+  // Re-derives every vertex from the planes of the faces that use it
+  // (the least-squares point closest to all of them, nudged as little as
+  // possible where the planes don't pin it down, e.g. a point sitting
+  // along an edge). Shapes that have been through rounding - an old
+  // export, or earlier stellations done before values were kept exact -
+  // have faces that are only almost flat; this pulls them back onto
+  // consistent planes so the planes of a stellation line up properly.
+  function planarizeShape(vertices, faces, iterations) {
+    iterations = iterations || 12;
+    const verts = vertices.map((v) => v.clone());
+    const incident = vertices.map(() => []);
+    faces.forEach((poly, fi) => new Set(poly).forEach((vi) => incident[vi].push(fi)));
+    for (let it = 0; it < iterations; it++) {
+      const planes = faces.map((poly) => {
+        const n = newellNormal(poly, verts);
+        if (n.lengthSq() < 1e-18) return null;
+        n.normalize();
+        return { n, d: n.dot(faceCentroidOf(poly, verts)) };
+      });
+      const next = verts.map((v, vi) => {
+        const ps = incident[vi].map((fi) => planes[fi]).filter(Boolean);
+        if (ps.length < 2) return v;
+        const lam = 1e-8;
+        const a = [lam, 0, 0, 0, lam, 0, 0, 0, lam];
+        const b = [lam * v.x, lam * v.y, lam * v.z];
+        ps.forEach(({ n, d }) => {
+          a[0] += n.x * n.x; a[1] += n.x * n.y; a[2] += n.x * n.z;
+          a[3] += n.y * n.x; a[4] += n.y * n.y; a[5] += n.y * n.z;
+          a[6] += n.z * n.x; a[7] += n.z * n.y; a[8] += n.z * n.z;
+          b[0] += n.x * d; b[1] += n.y * d; b[2] += n.z * d;
+        });
+        const det =
+          a[0] * (a[4] * a[8] - a[5] * a[7]) -
+          a[1] * (a[3] * a[8] - a[5] * a[6]) +
+          a[2] * (a[3] * a[7] - a[4] * a[6]);
+        if (Math.abs(det) < 1e-30) return v;
+        const x = (b[0] * (a[4] * a[8] - a[5] * a[7]) - a[1] * (b[1] * a[8] - a[5] * b[2]) + a[2] * (b[1] * a[7] - a[4] * b[2])) / det;
+        const y = (a[0] * (b[1] * a[8] - a[5] * b[2]) - b[0] * (a[3] * a[8] - a[5] * a[6]) + a[2] * (a[3] * b[2] - b[1] * a[6])) / det;
+        const z = (a[0] * (a[4] * b[2] - b[1] * a[7]) - a[1] * (a[3] * b[2] - b[1] * a[6]) + b[0] * (a[3] * a[7] - a[4] * a[6])) / det;
+        return new THREE.Vector3(x, y, z);
+      });
+      for (let i = 0; i < verts.length; i++) verts[i] = next[i];
+    }
+    return verts;
+  }
+
+  // Only clean up shapes whose faces are already nearly flat (rounding
+  // noise). A face that is genuinely non-planar - e.g. a truncated
+  // irregular corner - must be left alone, not bent flat.
+  function cleanedVertices(vertices, faces) {
+    const size = shapeSize(vertices);
+    const noise = maxFacePlanarity(vertices, faces);
+    if (noise < 1e-12 || noise > size * 2e-3) return vertices;
+    return planarizeShape(vertices, faces, 12);
+  }
+
+  // ---------------------------------------------------------------
+  // Symmetries of a point set, for "create face uniformly".
+  //
+  // A symmetry is a rotation or reflection about the set's centre (every
+  // symmetry of a point set fixes its average position) that sends the
+  // set exactly onto itself. Every point that a symmetry can carry some
+  // point to is "symmetrically similar" to it: same distance from the
+  // centre and the same arrangement of points around it. Returns each
+  // symmetry as a permutation: perm[i] = index of the point that point i
+  // is carried to.
+  // ---------------------------------------------------------------
+  // Points that sit within a hair of each other (leftovers of rounding in
+  // older shapes, where one corner ended up as two almost-identical
+  // vertices) are treated as one point, then every copy gets the image of
+  // the first copy in its group.
+  function findPointSetSymmetries(points) {
+    const bounds = boundsCentre(points);
+    let extent = 0;
+    points.forEach((q) => (extent = Math.max(extent, q.distanceTo(bounds))));
+    const tol = Math.max(extent * 2e-4, 1e-9);
+
+    const clusterOf = new Array(points.length);
+    const reps = []; // one entry per distinct point: { pos, first }
+    points.forEach((q, i) => {
+      let c = -1;
+      for (let k = 0; k < reps.length; k++) {
+        if (reps[k].pos.distanceTo(q) < tol) { c = k; break; }
+      }
+      if (c < 0) { reps.push({ pos: q.clone(), first: i }); c = reps.length - 1; }
+      clusterOf[i] = c;
+    });
+
+    const clusterPerms = findDistinctPointSymmetries(reps.map((r) => r.pos));
+    return clusterPerms.map((cp) => points.map((_, i) => reps[cp[clusterOf[i]]].first));
+  }
+
+  function findDistinctPointSymmetries(points) {
+    const n = points.length;
+    if (n < 2) return [];
+    const centre = new THREE.Vector3();
+    points.forEach((q) => centre.add(q));
+    centre.divideScalar(n);
+    const P = points.map((q) => q.clone().sub(centre));
+    const R = P.map((q) => q.length());
+    const size = Math.max(...R);
+    if (size < 1e-9) return [];
+    const tol = Math.max(size * 2e-4, 1e-9);
+
+    // spatial hash so "which point is here?" is a quick lookup
+    const cell = tol * 4;
+    const grid = new Map();
+    P.forEach((q, i) => {
+      const key = Math.floor(q.x / cell) + "," + Math.floor(q.y / cell) + "," + Math.floor(q.z / cell);
+      if (!grid.has(key)) grid.set(key, []);
+      grid.get(key).push(i);
+    });
+    function lookup(x, y, z) {
+      const ix = Math.floor(x / cell), iy = Math.floor(y / cell), iz = Math.floor(z / cell);
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dz = -1; dz <= 1; dz++) {
+            const bucket = grid.get((ix + dx) + "," + (iy + dy) + "," + (iz + dz));
+            if (!bucket) continue;
+            for (const i of bucket) {
+              if (Math.abs(P[i].x - x) < tol && Math.abs(P[i].y - y) < tol && Math.abs(P[i].z - z) < tol) return i;
+            }
+          }
+        }
+      }
+      return -1;
+    }
+
+    // Two reference points (not in line with the centre) pin a symmetry
+    // down once we also say whether it flips handedness, so only their
+    // possible images need trying. Take the ones with the fewest
+    // look-alikes to keep that list short.
+    const sameRadius = R.map((r) => R.filter((r2) => Math.abs(r - r2) < tol).length);
+    let ai = -1;
+    for (let i = 0; i < n; i++) {
+      if (R[i] > tol && (ai < 0 || sameRadius[i] < sameRadius[ai])) ai = i;
+    }
+    if (ai < 0) return [];
+    let bi = -1;
+    for (let i = 0; i < n; i++) {
+      if (i === ai) continue;
+      const cr = P[ai].clone().cross(P[i]).length();
+      if (cr > size * size * 1e-3 && (bi < 0 || sameRadius[i] < sameRadius[bi])) bi = i;
+    }
+    if (bi < 0) return []; // every point lies on one line through the centre
+
+    const a = P[ai], b = P[bi];
+    const nrm = a.clone().cross(b);
+    const ab = a.dot(b);
+    // inverse of the matrix whose columns are a, b, a x b
+    const B = [a.x, b.x, nrm.x, a.y, b.y, nrm.y, a.z, b.z, nrm.z];
+    const det =
+      B[0] * (B[4] * B[8] - B[5] * B[7]) - B[1] * (B[3] * B[8] - B[5] * B[6]) + B[2] * (B[3] * B[7] - B[4] * B[6]);
+    const Binv = [
+      (B[4] * B[8] - B[5] * B[7]) / det, (B[2] * B[7] - B[1] * B[8]) / det, (B[1] * B[5] - B[2] * B[4]) / det,
+      (B[5] * B[6] - B[3] * B[8]) / det, (B[0] * B[8] - B[2] * B[6]) / det, (B[2] * B[3] - B[0] * B[5]) / det,
+      (B[3] * B[7] - B[4] * B[6]) / det, (B[1] * B[6] - B[0] * B[7]) / det, (B[0] * B[4] - B[1] * B[3]) / det,
+    ];
+
+    const symmetries = [];
+    for (let aj = 0; aj < n; aj++) {
+      if (Math.abs(R[aj] - R[ai]) > tol) continue;
+      for (let bj = 0; bj < n; bj++) {
+        if (bj === aj || Math.abs(R[bj] - R[bi]) > tol) continue;
+        if (Math.abs(P[aj].dot(P[bj]) - ab) > tol * size * 4) continue;
+        const nrm2 = P[aj].clone().cross(P[bj]);
+        for (const sign of [1, -1]) {
+          const c3 = nrm2.clone().multiplyScalar(sign);
+          // M = [a' b' c'] * Binv
+          const C = [P[aj].x, P[bj].x, c3.x, P[aj].y, P[bj].y, c3.y, P[aj].z, P[bj].z, c3.z];
+          const M = [
+            C[0]*Binv[0]+C[1]*Binv[3]+C[2]*Binv[6], C[0]*Binv[1]+C[1]*Binv[4]+C[2]*Binv[7], C[0]*Binv[2]+C[1]*Binv[5]+C[2]*Binv[8],
+            C[3]*Binv[0]+C[4]*Binv[3]+C[5]*Binv[6], C[3]*Binv[1]+C[4]*Binv[4]+C[5]*Binv[7], C[3]*Binv[2]+C[4]*Binv[5]+C[5]*Binv[8],
+            C[6]*Binv[0]+C[7]*Binv[3]+C[8]*Binv[6], C[6]*Binv[1]+C[7]*Binv[4]+C[8]*Binv[7], C[6]*Binv[2]+C[7]*Binv[5]+C[8]*Binv[8],
+          ];
+          const perm = new Array(n);
+          const taken = new Array(n).fill(false);
+          let ok = true;
+          for (let i = 0; i < n && ok; i++) {
+            const q = P[i];
+            const j = lookup(
+              M[0] * q.x + M[1] * q.y + M[2] * q.z,
+              M[3] * q.x + M[4] * q.y + M[5] * q.z,
+              M[6] * q.x + M[7] * q.y + M[8] * q.z
+            );
+            if (j < 0 || taken[j]) ok = false;
+            else { perm[i] = j; taken[j] = true; }
+          }
+          if (ok) symmetries.push(perm);
+        }
+      }
+    }
+    return symmetries;
+  }
+
+  // Groups the points into kinds: two points are the same kind when some
+  // symmetry of the whole set carries one onto the other. Returns the kind
+  // number of every point (kinds numbered in order of first appearance).
+  function orbitsFromPerms(n, perms) {
+    const parent = Array.from({ length: n }, (_, i) => i);
+    const find = (i) => {
+      while (parent[i] !== i) {
+        parent[i] = parent[parent[i]];
+        i = parent[i];
+      }
+      return i;
+    };
+    perms.forEach((perm) => {
+      for (let i = 0; i < n; i++) {
+        const a = find(i), b = find(perm[i]);
+        if (a !== b) parent[Math.max(a, b)] = Math.min(a, b);
+      }
+    });
+    const kindOfRoot = new Map();
+    const kindOf = [];
+    for (let i = 0; i < n; i++) {
+      const r = find(i);
+      if (!kindOfRoot.has(r)) kindOfRoot.set(r, kindOfRoot.size);
+      kindOf.push(kindOfRoot.get(r));
+    }
+    return { kindOf, count: kindOfRoot.size };
+  }
+
+  // Groups the other points by the plane they would make with points
+  // ia and ib: every plane through the line ia-ib is one group, so two
+  // points share a group exactly when all four are coplanar. kindOf is -1
+  // for points on the line itself (they make no single plane) and for
+  // ia and ib themselves.
+  function planeKindsThroughTwo(points, ia, ib) {
+    const n = points.length;
+    const kindOf = new Array(n).fill(-1);
+    const A = points[ia];
+    const u = points[ib].clone().sub(A);
+    const ul = u.length();
+    if (ul < 1e-9) return { kindOf, count: 0 };
+    u.divideScalar(ul);
+    let size = 0;
+    points.forEach((q) => (size = Math.max(size, q.distanceTo(A))));
+    const onLine = Math.max(size * 1e-3, 1e-9);
+    const normals = [];
+    for (let i = 0; i < n; i++) {
+      if (i === ia || i === ib) continue;
+      const w = points[i].clone().sub(A);
+      w.addScaledVector(u, -w.dot(u)); // the part of P - A that points away from the line
+      if (w.length() < onLine) continue;
+      const nrm = u.clone().cross(w).normalize(); // normal of the plane through A, B and P
+      let k = -1;
+      for (let r = 0; r < normals.length; r++) {
+        // parallel (or opposite) normals = the same plane
+        if (normals[r].clone().cross(nrm).length() < 2e-3) { k = r; break; }
+      }
+      if (k < 0) { normals.push(nrm); k = normals.length - 1; }
+      kindOf[i] = k;
+    }
+    return { kindOf, count: normals.length };
+  }
+
+  // Puts coplanar points in order round their centre (a polygon through
+  // all of them).
+  function orderCoplanarPoints(points, members) {
+    const c = new THREE.Vector3();
+    members.forEach((i) => c.add(points[i]));
+    c.divideScalar(members.length);
+    let e1 = null, best = -1;
+    members.forEach((i) => {
+      const d = points[i].clone().sub(c);
+      if (d.length() > best) { best = d.length(); e1 = d; }
+    });
+    let normal = null;
+    best = -1;
+    members.forEach((i) => {
+      const cr = e1.clone().cross(points[i].clone().sub(c));
+      if (cr.length() > best) { best = cr.length(); normal = cr; }
+    });
+    if (!normal || best < 1e-12) return members.slice();
+    normal.normalize();
+    const u = e1.clone().normalize();
+    const w = normal.clone().cross(u);
+    const angle = (i) => {
+      const d = points[i].clone().sub(c);
+      return Math.atan2(d.dot(w), d.dot(u));
+    };
+    return members.slice().sort((a, b) => angle(a) - angle(b));
+  }
+
+  function gcdInt(a, b) {
+    return b === 0 ? a : gcdInt(b, a % b);
+  }
+
+  // Every way to run a polygon through m points in cyclic order: straight
+  // round (the ordinary polygon) and, from 5 points up, the star polygons
+  // that step k points at a time ({5/2} is the pentagram).
+  function polygonOrderings(ordered) {
+    const m = ordered.length;
+    const out = [{ face: ordered.slice(), step: 1 }];
+    for (let k = 2; 2 * k < m; k++) {
+      if (gcdInt(m, k) !== 1) continue;
+      out.push({ face: ordered.map((_, i) => ordered[(i * k) % m]), step: k });
+    }
+    return out;
+  }
+
+  // Each edge used by exactly two faces: a closed surface.
+  function facesFormClosedSurface(faces) {
+    const uses = new Map();
+    for (const f of faces) {
+      for (let i = 0; i < f.length; i++) {
+        const a = f[i], b = f[(i + 1) % f.length];
+        const key = a < b ? a + "_" + b : b + "_" + a;
+        uses.set(key, (uses.get(key) || 0) + 1);
+      }
+    }
+    if (uses.size === 0) return false;
+    for (const count of uses.values()) if (count !== 2) return false;
+    return true;
+  }
+
+  // All the polyhedra you get by making ONE kind of face and copying it
+  // uniformly (to every symmetric position) over the point set.
+  // The kinds of face tried are exactly the ones you can build by hand with
+  // the colouring modes: take a point of each kind (symmetrically
+  // different); then a second point of each kind as seen from the first;
+  // then every plane through those two points (the "same plane" groups);
+  // the face is the two points plus everything in that plane. Only results
+  // Every distinct result is kept, closed or not: a set of one kind of
+  // face that doesn't close up (or whose faces cross themselves, like a
+  // pentagram) is still a useful part to build a polyhedron from. Each
+  // result is a list of faces (arrays of point indices) plus whether it
+  // closes up into a surface.
+  //
+  // A generator, so a big shape can be searched in small slices without
+  // freezing the page: it yields { results, scanned } as it goes and
+  // finishes with { results, truncated }.
+  function* enumerateUniformReorderingsGen(points, perms) {
+    const n = points.length;
+    const results = [];
+    if (n < 4 || perms.length === 0) return { results, truncated: false };
+    let extent = 0;
+    const mid = boundsCentre(points);
+    points.forEach((q) => (extent = Math.max(extent, q.distanceTo(mid))));
+    const dupTol = Math.max(extent * 1e-3, 1e-9);
+
+    const globalKinds = orbitsFromPerms(n, perms);
+    const startPoints = [];
+    const seenKind = new Set();
+    for (let i = 0; i < n; i++) {
+      if (!seenKind.has(globalKinds.kindOf[i])) {
+        seenKind.add(globalKinds.kindOf[i]);
+        startPoints.push(i);
+      }
+    }
+
+    const seenPointSets = new Set();
+    const seenSurfaces = new Set();
+    let scanned = 0;
+
+    for (const P of startPoints) {
+      const stabiliser = perms.filter((perm) => perm[P] === P);
+      const seenRelative = new Set();
+      const relative = orbitsFromPerms(n, stabiliser);
+      for (let Q = 0; Q < n; Q++) {
+        if (Q === P || seenRelative.has(relative.kindOf[Q])) continue;
+        seenRelative.add(relative.kindOf[Q]);
+        const planes = planeKindsThroughTwo(points, P, Q);
+        for (let g = 0; g < planes.count; g++) {
+          scanned++;
+          yield { results, scanned };
+          const members = [P, Q];
+          for (let i = 0; i < n; i++) {
+            if (planes.kindOf[i] !== g) continue;
+            if (members.some((m) => points[m].distanceTo(points[i]) < dupTol)) continue;
+            members.push(i);
+          }
+          if (members.length < 3) continue;
+          const setKey = members.slice().sort((x, y) => x - y).join(",");
+          if (seenPointSets.has(setKey)) continue;
+          seenPointSets.add(setKey);
+
+          const ordered = orderCoplanarPoints(points, members);
+          for (const variant of polygonOrderings(ordered)) {
+            const faces = [];
+            const keys = new Set();
+            for (const perm of perms) {
+              const img = variant.face.map((i) => perm[i]);
+              if (new Set(img).size < img.length) continue;
+              const key = faceCycleKey(img);
+              if (keys.has(key)) continue;
+              keys.add(key);
+              faces.push(img);
+            }
+            const signature = Array.from(keys).sort().join("|");
+            if (seenSurfaces.has(signature)) continue;
+            seenSurfaces.add(signature);
+            results.push({
+              faces,
+              sides: variant.face.length,
+              step: variant.step,
+              closed: facesFormClosedSurface(faces),
+            });
+          }
+        }
+      }
+    }
+    return { results, truncated: false };
+  }
+
+  // Runs the search to the end in one go (used where freezing is fine).
+  function enumerateUniformReorderings(points, perms) {
+    const gen = enumerateUniformReorderingsGen(points, perms);
+    let step = gen.next();
+    while (!step.done) step = gen.next();
+    return step.value;
+  }
+
+  // A name for a set of uniformly-copied faces, e.g. "12 pentagrams".
+  function reorderingName(count, sides, step) {
+    const plain = { 3: "triangles", 4: "quadrilaterals", 5: "pentagons", 6: "hexagons", 8: "octagons", 10: "decagons" };
+    if (step > 1) {
+      return count + " " + (sides === 5 && step === 2 ? "pentagrams" : "{" + sides + "/" + step + "} stars");
+    }
+    return count + " " + (plain[sides] || sides + "-gons");
+  }
+
+  // Identifies a polyhedron by its geometry (corners rounded to 3
+  // decimals, each face as a cycle) so the same shape isn't saved twice.
+  function polyhedronSignature(verts, faces) {
+    const id = verts.map((v) => v.x.toFixed(3) + "," + v.y.toFixed(3) + "," + v.z.toFixed(3));
+    const cycle = (poly) => {
+      const ids = poly.map((i) => id[i]);
+      let best = null;
+      [ids, ids.slice().reverse()].forEach((seq) => {
+        let m = 0;
+        for (let i = 1; i < seq.length; i++) if (seq[i] < seq[m]) m = i;
+        const key = seq.slice(m).concat(seq.slice(0, m)).join(";");
+        if (best === null || key < best) best = key;
+      });
+      return best;
+    };
+    return faces.map(cycle).sort().join("|");
+  }
+
+  // Combines two polyhedra into one compound: all the corners and faces of
+  // both, the second's face numbers shifted past the first's corners.
+  function combinePolyhedra(a, b) {
+    const offset = a.verts.length;
+    return {
+      verts: [...a.verts.map((v) => v.clone()), ...b.verts.map((v) => v.clone())],
+      faces: [...a.faces.map((f) => f.slice()), ...b.faces.map((f) => f.map((i) => i + offset))],
+      colors: [...a.colors, ...b.colors],
+    };
+  }
+
+  function computeVertexOrbits(points) {
+    return orbitsFromPerms(points.length, findPointSetSymmetries(points));
+  }
+
+  // A distinct, easy-to-tell-apart colour for each kind of point. Hues are
+  // spread by the golden ratio so neighbouring kinds never look alike
+  // however many there are, and the yellow-orange band is skipped because
+  // amber is what a selected point turns.
+  function kindColorHex(k) {
+    const t = (k * 0.6180339887 + 0.3) % 1;
+    const hue = ((75 + t * 300) % 360) / 360; // 15-75 degrees (the yellows/oranges) is left out
+    const sat = 0.78;
+    const light = 0.5 + 0.12 * (k % 2);
+    const a = sat * Math.min(light, 1 - light);
+    const f = (n) => {
+      const kk = (n + hue * 12) % 12;
+      return light - a * Math.max(-1, Math.min(kk - 3, 9 - kk, 1));
+    };
+    const to8 = (x) => Math.round(Math.max(0, Math.min(1, x)) * 255);
+    return (to8(f(0)) << 16) | (to8(f(8)) << 8) | to8(f(4));
+  }
+
+  // One key per distinct face, whichever vertex it is written from and
+  // whichever way round: used to avoid adding a face that already exists.
+  function faceCycleKey(poly) {
+    const n = poly.length;
+    let best = null;
+    [poly, poly.slice().reverse()].forEach((seq) => {
+      let m = 0;
+      for (let i = 1; i < n; i++) if (seq[i] < seq[m]) m = i;
+      const key = seq.slice(m).concat(seq.slice(0, m)).join(",");
+      if (best === null || key < best) best = key;
+    });
+    return best;
+  }
+
+  // ---------------------------------------------------------------
+  // Dual polyhedron computation (general, for any custom polyhedron -
+  // including non-convex/star polyhedra such as the great dodecahedron).
+  //
+  // Dual vertices = face centroids.
+  // Dual faces = for each original vertex, the centroids of its
+  // surrounding faces, in the cyclic order those faces actually meet
+  // around that vertex. That cyclic order MUST be derived from shared
+  // edges (topology), not from sorting by angle - angle-sorting only
+  // gives the right answer for convex shapes. For a star polyhedron
+  // like the great dodecahedron, walking by shared edges is what
+  // produces the correct pentagram face order of its dual (the small
+  // stellated dodecahedron) instead of a plain convex pentagon.
+  // ---------------------------------------------------------------
+  function computeDualPolyhedron(vertices, rawFacePolygons, preferredCentre) {
+    // The edge walk below needs every face wound consistently, so fix the
+    // INPUT first (not just the output) - hand-built faces are often mixed.
+    const facePolygons = normalizeFaceWinding(vertices, rawFacePolygons);
+    const faceCentroids = facePolygons.map((f) => {
+      const c = new THREE.Vector3();
+      f.forEach((idx) => c.add(vertices[idx]));
+      c.divideScalar(f.length);
+      return c;
+    });
+
+    // directed edge "a_b" -> the face that has consecutive vertices a,b
+    // (in that order) somewhere in its polygon
+    const edgeMap = new Map();
+    facePolygons.forEach((poly, fi) => {
+      const n = poly.length;
+      for (let i = 0; i < n; i++) {
+        const a = poly[i];
+        const b = poly[(i + 1) % n];
+        edgeMap.set(a + "_" + b, fi);
+      }
+    });
+
+    // for each vertex, every face touching it, with that face's
+    // neighboring vertices (prev/next) around this vertex
+    const vertexFaceEntries = vertices.map(() => []);
+    facePolygons.forEach((poly, fi) => {
+      const n = poly.length;
+      for (let i = 0; i < n; i++) {
+        const v = poly[i];
+        const prev = poly[(i - 1 + n) % n];
+        const next = poly[(i + 1) % n];
+        vertexFaceEntries[v].push({ face: fi, prev, next });
+      }
+    });
+
+    const dualFaces = [];
+    vertices.forEach((v, vi) => {
+      const entries = vertexFaceEntries[vi];
+      if (entries.length < 3) return;
+
+      const entryByFace = new Map();
+      entries.forEach((e) => entryByFace.set(e.face, e));
+
+      // Walk the fan of faces around vi by hopping across shared edges:
+      // from a face, cross the edge (prev -> vi) to reach the face on
+      // the other side, which is the one holding directed edge (vi -> prev).
+      const startFace = entries[0].face;
+      const order = [];
+      let currentFace = startFace;
+      let guard = 0;
+      do {
+        order.push(currentFace);
+        const entry = entryByFace.get(currentFace);
+        const nextFace = edgeMap.get(vi + "_" + entry.prev);
+        if (nextFace === undefined || nextFace === currentFace) break;
+        currentFace = nextFace;
+        guard++;
+      } while (currentFace !== startFace && guard < entries.length + 2);
+
+      if (order.length >= 3 && order.length === entries.length) {
+        dualFaces.push(order);
+      }
+    });
+
+    // Dual vertex positions by polar reciprocation about a centre point: a
+    // face plane at distance d with outward unit normal n becomes the point
+    // centre + n * r^2 / d. Unlike face centroids this reflects lopsided
+    // proportions (differently sized pyramids give differently sized dual
+    // faces) and taking the dual twice about the same centre returns the
+    // original shape. The centre must lie strictly inside every face plane.
+    const usedIdx = new Set();
+    facePolygons.forEach((poly) => poly.forEach((v) => usedIdx.add(v)));
+    const usedVerts = Array.from(usedIdx).map((v) => vertices[v]);
+    const mean = new THREE.Vector3();
+    usedVerts.forEach((v) => mean.add(v));
+    mean.divideScalar(usedVerts.length || 1);
+
+    function polar(centre) {
+      let scale = 0;
+      usedVerts.forEach((v) => (scale += v.distanceTo(centre)));
+      scale /= usedVerts.length || 1;
+      const points = [];
+      for (const poly of facePolygons) {
+        const normal = newellNormal(poly, vertices);
+        if (normal.lengthSq() < 1e-12) return null;
+        normal.normalize();
+        const d = normal.dot(faceCentroidOf(poly, vertices).sub(centre));
+        if (d < 1e-3 * scale) return null;
+        points.push(centre.clone().addScaledVector(normal, (scale * scale) / d));
+      }
+      return points;
+    }
+
+    const candidates = [];
+    if (preferredCentre) candidates.push(preferredCentre);
+    candidates.push(mean, boundsCentre(usedVerts));
+    for (const c of candidates) {
+      const points = polar(c);
+      if (points) {
+        return { vertices: points, faces: normalizeFaceWinding(points, dualFaces), centre: c.clone() };
+      }
+    }
+    // No interior point works (very unusual) - fall back to face centroids.
+    return {
+      vertices: faceCentroids,
+      faces: normalizeFaceWinding(faceCentroids, dualFaces),
+      centre: mean.clone(),
+    };
+  }
+
+  // ---------------------------------------------------------------
+  // Truncation. Every edge a-b gets two cut points, one a fraction t of the
+  // way in from each end. Each original face becomes a polygon through its
+  // cut points (2n corners), and each original vertex becomes a new face
+  // through the cut points on its edges. At t = 0.5 the two cut points on an
+  // edge coincide at its midpoint - that is rectification.
+  // ---------------------------------------------------------------
+  function isClosedManifold(faces) {
+    if (faces.length === 0) return false;
+    const seen = new Set();
+    for (const poly of faces) {
+      for (let i = 0; i < poly.length; i++) {
+        const key = poly[i] + "_" + poly[(i + 1) % poly.length];
+        if (seen.has(key)) return false;
+        seen.add(key);
+      }
+    }
+    for (const key of seen) {
+      const parts = key.split("_");
+      if (!seen.has(parts[1] + "_" + parts[0])) return false;
+    }
+    return true;
+  }
+
+  function directedEdgeMap(faces) {
+    const map = new Map();
+    faces.forEach((poly, fi) => {
+      poly.forEach((a, i) => map.set(a + "_" + poly[(i + 1) % poly.length], fi));
+    });
+    return map;
+  }
+
+  // Neighbours of vertex v in cyclic order around it (found by hopping
+  // across shared edges, so star vertex figures work too). null if the
+  // faces around v don't close up into a ring.
+  function vertexRing(v, faces, edgeMap) {
+    const entries = [];
+    faces.forEach((poly, fi) => {
+      const n = poly.length;
+      poly.forEach((u, i) => {
+        if (u === v) entries.push({ face: fi, prev: poly[(i - 1 + n) % n] });
+      });
+    });
+    if (entries.length === 0) return [];
+    const byFace = new Map(entries.map((e) => [e.face, e]));
+    const seen = new Set();
+    const ring = [];
+    let cur = entries[0];
+    while (cur && !seen.has(cur.face)) {
+      seen.add(cur.face);
+      ring.push(cur.prev);
+      const g = edgeMap.get(v + "_" + cur.prev);
+      cur = g === undefined ? null : byFace.get(g);
+    }
+    return cur === entries[0] && ring.length === entries.length ? ring : null;
+  }
+
+  function truncatePolyhedron(vertices, rawFaces, t) {
+    const faces = normalizeFaceWinding(vertices, rawFaces);
+    if (!isClosedManifold(faces)) {
+      return { error: "needs a closed shape where every edge is shared by exactly two faces" };
+    }
+    const edgeMap = directedEdgeMap(faces);
+    const rectified = t >= 0.5 - 1e-9;
+    const frac = rectified ? 0.5 : t;
+
+    const points = [];
+    const index = new Map();
+    function cut(a, b) {
+      const key = rectified ? (a < b ? a + "_" + b : b + "_" + a) : a + ">" + b;
+      if (index.has(key)) return index.get(key);
+      const pa = vertices[a];
+      const pb = vertices[b];
+      const idx = points.length;
+      points.push(pa.clone().add(pb.clone().sub(pa).multiplyScalar(frac)));
+      index.set(key, idx);
+      return idx;
+    }
+
+    const newFaces = [];
+    const origin = []; // original face index each new face came from (-1 = new corner face)
+    faces.forEach((poly, fi) => {
+      const n = poly.length;
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const a = poly[i];
+        const b = poly[(i + 1) % n];
+        out.push(cut(a, b), cut(b, a));
+      }
+      const clean = out.filter((idx, i) => idx !== out[(i - 1 + out.length) % out.length]);
+      if (clean.length >= 3) {
+        newFaces.push(clean);
+        origin.push(fi);
+      }
+    });
+
+    for (let v = 0; v < vertices.length; v++) {
+      const ring = vertexRing(v, faces, edgeMap);
+      if (ring === null) return { error: "the faces around one of the corners don't form a closed ring" };
+      if (ring.length >= 3) {
+        newFaces.push(ring.map((u) => cut(v, u)));
+        origin.push(-1);
+      }
+    }
+
+    return { vertices: points, faces: normalizeFaceWinding(points, newFaces), origin };
+  }
+
+  // The named solids only carry triangles; merge coplanar triangles back
+  // into their true polygon faces (a cube's 12 triangles -> 6 squares).
+  function mergeCoplanarTriangles(verts, triangles) {
+    const groups = [];
+    triangles.forEach((tri) => {
+      const [a, b, c] = tri.map((i) => verts[i]);
+      const n = b.clone().sub(a).cross(c.clone().sub(a));
+      if (n.lengthSq() < 1e-12) return;
+      n.normalize();
+      const o = n.dot(a);
+      let g = groups.find((q) => q.n.dot(n) > 1 - 1e-5 && Math.abs(q.o - o) < 1e-3);
+      if (!g) {
+        g = { n, o, tris: [] };
+        groups.push(g);
+      }
+      g.tris.push(tri);
+    });
+
+    const faces = [];
+    groups.forEach((g) => {
+      const dir = new Set();
+      g.tris.forEach(([a, b, c]) => {
+        dir.add(a + "_" + b);
+        dir.add(b + "_" + c);
+        dir.add(c + "_" + a);
+      });
+      const next = new Map();
+      dir.forEach((key) => {
+        const [a, b] = key.split("_").map(Number);
+        if (!dir.has(b + "_" + a)) next.set(a, b);
+      });
+      if (next.size === 0) return;
+      const start = next.keys().next().value;
+      const poly = [start];
+      let cur = next.get(start);
+      let guard = 0;
+      while (cur !== undefined && cur !== start && guard++ < 1000) {
+        poly.push(cur);
+        cur = next.get(cur);
+      }
+      if (poly.length >= 3) faces.push(poly);
+    });
+    return faces;
+  }
+
+  // Vertices + polygon faces of whatever is currently shown.
+  function currentPolygonShape() {
+    if (currentFacePolygons) return { verts: currentVerts, faces: currentFacePolygons };
+    if (!currentSolidName) return null;
+    const geometry = SOLID_GEOMETRIES[currentSolidName]();
+    geometry.scale(currentSolidScale, currentSolidScale, currentSolidScale);
+    const tris = facesFromRawGeometry(geometry, currentVerts);
+    return { verts: currentVerts, faces: mergeCoplanarTriangles(currentVerts, tris) };
+  }
+
+  // Centre + rescale vertices the same way a dual is fitted, so a shape
+  // that shrinks (as truncation does) keeps the previous shape's size.
+  function fitToCurrentSize(newVerts) {
+    const prevSize = currentVerts.length > 0 ? shapeSize(currentVerts) : null;
+    const newSize = shapeSize(newVerts);
+    const scale = prevSize !== null && newSize > 1e-6 ? prevSize / newSize : 1;
+    const shift = boundsCentre(newVerts);
+    return newVerts.map((v) => v.clone().sub(shift).multiplyScalar(scale));
+  }
+
+  // ---------------------------------------------------------------
+  // Stellation map: extend every face's plane infinitely. Within any
+  // one face's own plane, every OTHER face's plane crosses it as a
+  // line; together these lines cut that face's plane into a patchwork
+  // of convex regions - "cells" - the same "stellation diagram" used
+  // by stellation software and books. Each face gets its own diagram
+  // (computed in its own 2D plane coordinates), and all of them, laid
+  // end to end, are the regions the user cycles through and toggles.
+  // ---------------------------------------------------------------
+
+  // Clip a convex 2D polygon to one side of the line through p1,p2.
+  function stellSide(p, p1, p2, eps) {
+    const s = (p2.x - p1.x) * (p.y - p1.y) - (p2.y - p1.y) * (p.x - p1.x);
+    return Math.abs(s) < eps ? 0 : s;
+  }
+  function stellClip(poly, p1, p2, keepPositive, eps) {
+    const out = [];
+    const n = poly.length;
+    for (let i = 0; i < n; i++) {
+      const cur = poly[i], next = poly[(i + 1) % n];
+      const curSide = stellSide(cur, p1, p2, eps), nextSide = stellSide(next, p1, p2, eps);
+      const curIn = keepPositive ? curSide >= 0 : curSide <= 0;
+      const nextIn = keepPositive ? nextSide >= 0 : nextSide <= 0;
+      if (curIn) out.push(cur);
+      if (curIn !== nextIn && curSide !== nextSide) {
+        const t = curSide / (curSide - nextSide);
+        out.push({ x: cur.x + t * (next.x - cur.x), y: cur.y + t * (next.y - cur.y) });
+      }
+    }
+    return out;
+  }
+  // Nonzero-winding point-in-polygon test, so a face that is itself a
+  // star (a pentagram traced as one loop) counts its centre as inside -
+  // matching how such a face is actually drawn (filled from its centroid).
+  function stellWindingContains(poly, pt) {
+    let wn = 0;
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i], b = poly[(i + 1) % poly.length];
+      const cross = (b.x - a.x) * (pt.y - a.y) - (pt.x - a.x) * (b.y - a.y);
+      if (a.y <= pt.y) {
+        if (b.y > pt.y && cross > 0) wn++;
+      } else if (b.y <= pt.y && cross < 0) {
+        wn--;
+      }
+    }
+    return wn !== 0;
+  }
+
+  // Sutherland-Hodgman clipping can leave an original vertex and an
+  // almost-identical intersection point sitting right next to each
+  // other in the output (when a clip line passes almost exactly through
+  // an existing corner). Left in, these create a zero-length edge from
+  // a point back to itself, which has no real partner to cancel against
+  // when merging cells - collapsing them here keeps every cell's own
+  // points clean before anything downstream (rendering, merging, or
+  // building the final shape) ever sees them.
+  function stellDedupePoly(poly, eps) {
+    const out = [];
+    for (let i = 0; i < poly.length; i++) {
+      const p = poly[i];
+      const prev = out[out.length - 1];
+      if (!prev || Math.abs(p.x - prev.x) >= eps || Math.abs(p.y - prev.y) >= eps) out.push(p);
+    }
+    while (out.length > 1 &&
+      Math.abs(out[0].x - out[out.length - 1].x) < eps &&
+      Math.abs(out[0].y - out[out.length - 1].y) < eps) {
+      out.pop();
+    }
+    return out;
+  }
+  function stellPolyArea(poly) {
+    let a = 0;
+    for (let i = 0; i < poly.length; i++) {
+      const p = poly[i], q = poly[(i + 1) % poly.length];
+      a += p.x * q.y - q.x * p.y;
+    }
+    return Math.abs(a) / 2;
+  }
+  function stellPointInside(poly, p, eps) {
+    for (let i = 0; i < poly.length; i++) {
+      if (stellSide(p, poly[i], poly[(i + 1) % poly.length], eps) < 0) return false;
+    }
+    return true;
+  }
+  // Incrementally slice a big bounding square by every line, keeping
+  // every resulting piece - this is exactly the arrangement's cells.
+  function stellBuildCells(boundBox, lines, eps) {
+    let cells = [boundBox];
+    lines.forEach(([p1, p2]) => {
+      const next = [];
+      cells.forEach((cell) => {
+        const pos = stellClip(cell, p1, p2, true, eps);
+        const neg = stellClip(cell, p1, p2, false, eps);
+        if (pos.length >= 3 && stellPolyArea(pos) > eps * eps) next.push(pos);
+        if (neg.length >= 3 && stellPolyArea(neg) > eps * eps) next.push(neg);
+      });
+      cells = next;
+    });
+    return cells;
+  }
+
+  function stellTo3D(p2, plane) {
+    return plane.centroid.clone().add(plane.u.clone().multiplyScalar(p2.x)).add(plane.v.clone().multiplyScalar(p2.y));
+  }
+
+  // Computes every region across every face of the given shape. A real
+  // stellation only ever replaces a face with a (possibly larger) cell
+  // from that SAME face's own plane diagram - e.g. a dodecahedron's
+  // pentagon becomes a pentagram entirely within its own plane, built
+  // from the 5 small triangular cells bordering it there. There is no
+  // such thing as "borrowing" a cell from a different face's diagram;
+  // each face's own diagram is independent, so each region also gets
+  // its same-face neighbours (cells it shares a 2D edge with, within
+  // this face's own diagram) precomputed here.
+  function computeStellationRegions(vertices, rawFacePolygons) {
+    const facePolygons = normalizeFaceWinding(vertices, rawFacePolygons);
+
+    let maxR = 0;
+    vertices.forEach((v) => (maxR = Math.max(maxR, v.length())));
+    const S = Math.max(maxR, 1) * 2;
+    const boundBox = [
+      { x: -S, y: -S }, { x: S, y: -S }, { x: S, y: S }, { x: -S, y: S },
+    ];
+    const eps = Math.max(maxR * 1e-6, 1e-9);
+    // How far the shape's faces stray from perfectly flat: the corners
+    // of near-concurrent planes can only be trusted to about this much.
+    const planeNoise = maxFacePlanarity(vertices, facePolygons);
+
+    const planes = facePolygons.map((poly) => {
+      const centroid = faceCentroidOf(poly, vertices);
+      const normal = newellNormal(poly, vertices);
+      if (normal.lengthSq() < 1e-12) return null;
+      normal.normalize();
+      let t = new THREE.Vector3(1, 0, 0);
+      if (Math.abs(normal.dot(t)) > 0.9) t = new THREE.Vector3(0, 1, 0);
+      const u = t.clone().sub(normal.clone().multiplyScalar(t.dot(normal))).normalize();
+      const v = normal.clone().cross(u);
+      return { centroid, normal, u, v };
+    });
+
+    function edgesOf(poly) {
+      return poly.map((p, i) => [p, poly[(i + 1) % poly.length]]);
+    }
+    function pointsMatch(a, b) {
+      return Math.abs(a.x - b.x) < eps * 4 && Math.abs(a.y - b.y) < eps * 4;
+    }
+
+    const regions = [];
+    facePolygons.forEach((poly, fi) => {
+      const planeF = planes[fi];
+      if (!planeF) return;
+
+      const lines = [];
+      planes.forEach((planeG, gi) => {
+        if (gi === fi || !planeG) return;
+        const dir = planeF.normal.clone().cross(planeG.normal);
+        if (dir.lengthSq() < 1e-12) return; // parallel planes never meet
+        const a = planeG.normal.dot(planeF.u);
+        const b = planeG.normal.dot(planeF.v);
+        if (Math.abs(a) < 1e-9 && Math.abs(b) < 1e-9) return;
+        const c = planeG.normal.dot(planeG.centroid.clone().sub(planeF.centroid));
+        const big = S * 10;
+        let p1, p2;
+        if (Math.abs(b) > Math.abs(a)) {
+          p1 = { x: -big, y: (c + big * a) / b };
+          p2 = { x: big, y: (c - big * a) / b };
+        } else {
+          p1 = { x: (c + big * b) / a, y: -big };
+          p2 = { x: (c - big * b) / a, y: big };
+        }
+        lines.push([p1, p2]);
+      });
+
+      const rawCells = stellBuildCells(boundBox, lines, eps);
+
+      // Real shapes are never perfectly exact (coordinates get rounded
+      // when exported/imported, and solids are stored to 4 decimals), so
+      // planes that should meet at exactly one point or line miss by a
+      // hair. That shows up as sliver cells between near-identical lines
+      // and tiny triangles around near-concurrent points, whose corners
+      // then fail to line up with their neighbours' when cells are
+      // merged back into faces. So: snap every corner within a tiny
+      // tolerance onto one shared point, and drop any cell that collapses
+      // (a sliver ends up with only two distinct corners). Neighbouring
+      // cells then share corners exactly instead of "almost".
+      const snapTol = Math.max(maxR * 5e-5, planeNoise * 8, 1e-7);
+      const snapGrid = new Map();
+      function snapPoint(pt) {
+        const ix = Math.floor(pt.x / snapTol), iy = Math.floor(pt.y / snapTol);
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            const bucket = snapGrid.get((ix + dx) + "," + (iy + dy));
+            if (!bucket) continue;
+            for (const rep of bucket) {
+              if (Math.abs(rep.x - pt.x) < snapTol && Math.abs(rep.y - pt.y) < snapTol) return rep;
+            }
+          }
+        }
+        const rep = { x: pt.x, y: pt.y };
+        const key = ix + "," + iy;
+        if (!snapGrid.has(key)) snapGrid.set(key, []);
+        snapGrid.get(key).push(rep);
+        return rep;
+      }
+      const cells = [];
+      const cellUnbounded = [];
+      rawCells.forEach((raw) => {
+        // Decided from the raw corners, before snapping can nudge them
+        // off the bounding square's edge.
+        const touchesBox = raw.some(
+          (q) => Math.abs(Math.abs(q.x) - S) < eps * 4 || Math.abs(Math.abs(q.y) - S) < eps * 4
+        );
+        const snapped = [];
+        raw.forEach((q) => {
+          const rep = snapPoint(q);
+          if (snapped[snapped.length - 1] !== rep) snapped.push(rep);
+        });
+        while (snapped.length > 1 && snapped[0] === snapped[snapped.length - 1]) snapped.pop();
+        if (snapped.length < 3 || stellPolyArea(snapped) < snapTol * snapTol) return;
+        cells.push(snapped);
+        cellUnbounded.push(touchesBox);
+      });
+      // A face that has already been stellated lies in the very same
+      // plane as before, so its diagram is identical to the original's -
+      // what differs is how much of that diagram the face covers. A cell
+      // counts as "original" (part of the shape as it stands) when it
+      // lies inside this face's actual current outline, so a star-shaped
+      // face starts with all of its cells on, not just the centre one.
+      const outline2D = poly.map((idx) => {
+        const rel = vertices[idx].clone().sub(planeF.centroid);
+        return { x: rel.dot(planeF.u), y: rel.dot(planeF.v) };
+      });
+      const faceRegions = cells.map((cell, ci) => {
+        let cx = 0, cy = 0;
+        cell.forEach((q) => { cx += q.x; cy += q.y; });
+        const mid = { x: cx / cell.length, y: cy / cell.length };
+        return {
+          face: fi,
+          poly2D: cell,
+          plane: planeF,
+          isOriginal: stellWindingContains(outline2D, mid),
+          // A cell touching the edge of the bounding square runs off to
+          // infinity (it only stops there because we cut it off), so it
+          // can never be part of a finite polyhedron.
+          unbounded: cellUnbounded[ci],
+          neighbors: [],
+        };
+      });
+      if (!faceRegions.some((r) => r.isOriginal)) {
+        const centre = faceRegions.find((r) => stellPointInside(r.poly2D, { x: 0, y: 0 }, eps));
+        if (centre) centre.isOriginal = true;
+      }
+
+      // Two cells in the same face's own diagram are neighbours if they
+      // share a whole edge - this is what toggling a cell off reveals.
+      const cellEdges = faceRegions.map((r) => edgesOf(r.poly2D));
+      for (let i = 0; i < faceRegions.length; i++) {
+        for (let j = i + 1; j < faceRegions.length; j++) {
+          let shared = false;
+          for (const e1 of cellEdges[i]) {
+            for (const e2 of cellEdges[j]) {
+              if (
+                (pointsMatch(e1[0], e2[0]) && pointsMatch(e1[1], e2[1])) ||
+                (pointsMatch(e1[0], e2[1]) && pointsMatch(e1[1], e2[0]))
+              ) {
+                shared = true;
+                break;
+              }
+            }
+            if (shared) break;
+          }
+          if (shared) {
+            faceRegions[i].neighbors.push(faceRegions[j]);
+            faceRegions[j].neighbors.push(faceRegions[i]);
+          }
+        }
+      }
+
+      regions.push(...faceRegions);
+    });
+
+    return regions;
+  }
+
+  // What toggling `toggled` off reveals: its neighbours within its own
+  // face's diagram (see computeStellationRegions for why it's same-face
+  // only, not cross-face).
+  function findBorderingRegions(toggled) {
+    return toggled.neighbors;
+  }
+
+  // Merges a group of cells from the SAME face's diagram - the cell that
+  // was toggled off plus the neighbours it revealed - into a single
+  // outer boundary loop (e.g. a pentagon's own cell plus its 5 revealed
+  // tip cells becomes one pentagram-shaped loop). This has to happen
+  // before the shape is built: if each cell stayed a separate face, a
+  // single logical face (and the vertex it's "one face" of, for the
+  // dual's face-per-vertex bookkeeping) would be split into several,
+  // throwing off face/vertex degree counts the dual depends on.
+  // All members share one plane, so this works directly in that
+  // face's own 2D coordinates: collect every cell's edges, cancel any
+  // edge that appears forwards in one cell and backwards in another
+  // (an internal, shared edge), and walk what's left into one loop.
+  function mergeFaceCellGroup(group) {
+    if (group.length === 1) return group[0].poly2D.slice();
+
+    let maxCoord = 0;
+    group.forEach((r) => r.poly2D.forEach((p) => {
+      maxCoord = Math.max(maxCoord, Math.abs(p.x), Math.abs(p.y));
+    }));
+    const eps = Math.max(maxCoord * 1e-6, 1e-9);
+    function pointsMatch(a, b) {
+      return Math.abs(a.x - b.x) < eps && Math.abs(a.y - b.y) < eps;
+    }
+
+    const edges = [];
+    group.forEach((r) => {
+      const poly = r.poly2D;
+      for (let i = 0; i < poly.length; i++) edges.push([poly[i], poly[(i + 1) % poly.length]]);
+    });
+
+    const used = new Array(edges.length).fill(false);
+    for (let i = 0; i < edges.length; i++) {
+      if (used[i]) continue;
+      for (let j = i + 1; j < edges.length; j++) {
+        if (used[j]) continue;
+        if (pointsMatch(edges[i][0], edges[j][1]) && pointsMatch(edges[i][1], edges[j][0])) {
+          used[i] = true;
+          used[j] = true;
+          break;
+        }
+      }
+    }
+    const boundary = edges.filter((_, i) => !used[i]);
+    if (boundary.length === 0) return [];
+
+    const loop = [boundary[0][0]];
+    let lastPoint = boundary[0][1];
+    const consumed = new Array(boundary.length).fill(false);
+    consumed[0] = true;
+    let guard = boundary.length + 2;
+    while (guard-- > 0) {
+      if (pointsMatch(lastPoint, loop[0])) break;
+      loop.push(lastPoint);
+      let found = -1;
+      for (let i = 0; i < boundary.length; i++) {
+        if (!consumed[i] && pointsMatch(boundary[i][0], lastPoint)) { found = i; break; }
+      }
+      if (found === -1) break;
+      consumed[found] = true;
+      lastPoint = boundary[found][1];
+    }
+    return loop;
+  }
+
+  // Reduces a merged outline to the face's true corners.
+  //
+  // Where the old face joins a new region, an edge of the old face and a
+  // side of the new region lie on one straight line (e.g. a pentagon's
+  // edge E-A, continued past A by the side of the tip next to it), so the
+  // old corner A is just a point on a straight run, not a corner of the
+  // new face. Following the outline alone would still list it, because the
+  // outline turns there to follow the neighbouring tip. Instead: gather
+  // every outline edge lying on the same straight line, and where the gap
+  // between two of them runs through the inside of the shape (the old
+  // face's own edge), treat them as ONE straight side. The face is then
+  // the polygon through just the ends of those straight sides. For a
+  // pentagon plus its 5 tips that is the pentagram's 5 tips - the old
+  // pentagon corners are only where its sides cross - instead of 10 points.
+  // If the sides don't chain into a single closed polygon, the plain
+  // outline is kept.
+  function stellReduceToCorners(loop) {
+    const n = loop.length;
+    if (n < 4) return loop;
+    let maxCoord = 0;
+    loop.forEach((q) => (maxCoord = Math.max(maxCoord, Math.abs(q.x), Math.abs(q.y))));
+    const posTol = Math.max(maxCoord * 3e-4, 1e-9);
+    const angTol = 2e-3;
+    const near = (a, b) => Math.abs(a.x - b.x) < posTol && Math.abs(a.y - b.y) < posTol;
+
+    const edges = [];
+    for (let i = 0; i < n; i++) {
+      const a = loop[i], b = loop[(i + 1) % n];
+      const len = Math.hypot(b.x - a.x, b.y - a.y);
+      if (len < posTol) continue;
+      edges.push({ a, b, dx: (b.x - a.x) / len, dy: (b.y - a.y) / len });
+    }
+    if (edges.length < 3) return loop;
+
+    // edges on the same straight line, running the same way
+    const lines = [];
+    edges.forEach((e) => {
+      let line = lines.find((ln) => {
+        const f = ln.ref;
+        if (Math.abs(f.dx * e.dy - f.dy * e.dx) > angTol) return false;
+        if (f.dx * e.dx + f.dy * e.dy < 0) return false;
+        return Math.abs((e.a.x - f.a.x) * -f.dy + (e.a.y - f.a.y) * f.dx) < posTol;
+      });
+      if (!line) {
+        line = { ref: e, edges: [] };
+        lines.push(line);
+      }
+      line.edges.push(e);
+    });
+
+    // join edges on one line across any gap that runs through the shape
+    const sides = [];
+    lines.forEach((ln) => {
+      const f = ln.ref;
+      const along = (pt) => (pt.x - f.a.x) * f.dx + (pt.y - f.a.y) * f.dy;
+      const sorted = ln.edges.slice().sort((e1, e2) => along(e1.a) - along(e2.a));
+      let cur = { a: sorted[0].a, b: sorted[0].b };
+      for (let k = 1; k < sorted.length; k++) {
+        const e = sorted[k];
+        const gap = along(e.a) - along(cur.b);
+        let joined = gap <= posTol;
+        if (!joined) {
+          // The gap has to stay inside the shape. Points on the outline
+          // itself count as inside (a side that crosses over old corners
+          // passes right through them), otherwise the answer flips with
+          // how the face happens to be oriented.
+          joined = [1, 2, 3, 4, 5, 6, 7].every((k) => {
+            const pt = {
+              x: cur.b.x + (k / 8) * (e.a.x - cur.b.x),
+              y: cur.b.y + (k / 8) * (e.a.y - cur.b.y),
+            };
+            if (stellWindingContains(loop, pt)) return true;
+            for (let i = 0; i < n; i++) {
+              const a = loop[i], b = loop[(i + 1) % n];
+              const sx = b.x - a.x, sy = b.y - a.y;
+              const len2 = sx * sx + sy * sy;
+              if (len2 === 0) continue;
+              const t = Math.max(0, Math.min(1, ((pt.x - a.x) * sx + (pt.y - a.y) * sy) / len2));
+              if (Math.hypot(pt.x - (a.x + t * sx), pt.y - (a.y + t * sy)) < posTol) return true;
+            }
+            return false;
+          });
+        }
+        if (joined) {
+          cur.b = e.b;
+        } else {
+          sides.push(cur);
+          cur = { a: e.a, b: e.b };
+        }
+      }
+      sides.push(cur);
+    });
+
+    // the corners are the ends of the sides
+    const corners = [];
+    const cornerIndex = (pt) => {
+      for (let i = 0; i < corners.length; i++) if (near(corners[i], pt)) return i;
+      corners.push(pt);
+      return corners.length - 1;
+    };
+    const links = sides.map((sd) => ({ from: cornerIndex(sd.a), to: cornerIndex(sd.b), sd }));
+
+    // a corner lying along the middle of another side splits that side
+    const pieces = [];
+    links.forEach((lk) => {
+      const dx = lk.sd.b.x - lk.sd.a.x, dy = lk.sd.b.y - lk.sd.a.y;
+      const len2 = dx * dx + dy * dy;
+      const mids = [];
+      corners.forEach((c, ci) => {
+        if (ci === lk.from || ci === lk.to) return;
+        const t = ((c.x - lk.sd.a.x) * dx + (c.y - lk.sd.a.y) * dy) / len2;
+        if (t <= 0 || t >= 1) return;
+        const px = lk.sd.a.x + t * dx, py = lk.sd.a.y + t * dy;
+        if (Math.abs(px - c.x) < posTol && Math.abs(py - c.y) < posTol) mids.push({ ci, t });
+      });
+      mids.sort((m1, m2) => m1.t - m2.t);
+      let prev = lk.from;
+      mids.forEach((m) => {
+        pieces.push({ from: prev, to: m.ci });
+        prev = m.ci;
+      });
+      pieces.push({ from: prev, to: lk.to });
+    });
+
+    // chain the pieces into one closed polygon
+    const nextOf = new Map();
+    for (const pc of pieces) {
+      if (nextOf.has(pc.from)) return loop;
+      nextOf.set(pc.from, pc.to);
+    }
+    if (nextOf.size !== corners.length || corners.length < 3) return loop;
+    const order = [0];
+    let at = nextOf.get(0);
+    while (at !== undefined && at !== 0 && order.length <= corners.length) {
+      order.push(at);
+      at = nextOf.get(at);
+    }
+    if (at !== 0 || order.length !== corners.length) return loop;
+    return order.map((ci) => corners[ci]);
+  }
+
+  // Builds the final vertices/faces from a list of GROUPS (each group is
+  // one or more same-face cells that should become a single face),
+  // welding points that different groups happened to land on together
+  // in 3D into one shared vertex, so the result is a real, edge-connected
+  // polyhedron rather than a pile of disconnected patches.
+  function buildShapeFromRegions(groups, groupColors) {
+    const rawVerts = [];
+    const rawFaces = [];
+    const keptColors = [];
+    groups.forEach((group, gi) => {
+      const plane = group[0].plane;
+      let loop2D = mergeFaceCellGroup(group);
+      if (group.length > 1) loop2D = stellReduceToCorners(loop2D);
+      if (loop2D.length < 3) return;
+      const base = rawVerts.length;
+      loop2D.forEach((p2) => rawVerts.push(stellTo3D(p2, plane)));
+      rawFaces.push(loop2D.map((_, i) => base + i));
+      if (groupColors) keptColors.push(groupColors[gi]);
+    });
+    if (rawVerts.length === 0) return { vertices: [], faces: [], colors: [] };
+
+    let maxR = 0;
+    rawVerts.forEach((v) => (maxR = Math.max(maxR, v.length())));
+    const eps = Math.max(maxR * 1e-4, 1e-6);
+    const welded = [];
+    function weld(p) {
+      for (let i = 0; i < welded.length; i++) {
+        if (welded[i].distanceTo(p) < eps) return i;
+      }
+      welded.push(p.clone());
+      return welded.length - 1;
+    }
+    const weldedFaces = rawFaces.map((poly) => poly.map((idx) => weld(rawVerts[idx])));
+
+    // A clip can emit two near-duplicate points at a corner (the original
+    // vertex plus an almost-identical intersection point); both weld to
+    // the same vertex, leaving that index repeated back-to-back in the
+    // face - a zero-length edge that corrupts the manifold check and any
+    // further use of the shape. Collapse those repeats (including the
+    // wrap-around between the last and first point) before using the
+    // faces for anything. Colors are filtered in lockstep so they stay
+    // aligned with whichever faces actually survive.
+    const cleanedFaces = weldedFaces.map((poly) =>
+      poly.filter((idx, i) => idx !== poly[(i - 1 + poly.length) % poly.length])
+    );
+    const faces = [];
+    const finalColors = [];
+    cleanedFaces.forEach((poly, i) => {
+      if (poly.length < 3) return;
+      faces.push(poly);
+      if (groupColors) finalColors.push(keptColors[i]);
+    });
+
+    return { vertices: welded, faces: normalizeFaceWinding(welded, faces), colors: finalColors };
+  }
+
+  // ---------------------------------------------------------------
+  // Applying a shape
+  // ---------------------------------------------------------------
+  function loadSolid(name) {
+    closeTruncationPanel(false);
+    closeStellationPanel(false);
+    const rawVerts = uniqueVerticesFromGeometry(SOLID_GEOMETRIES[name]());
+    const rawSize = shapeSize(rawVerts);
+    const prevSize = currentVerts.length > 0 ? shapeSize(currentVerts) : null;
+    currentSolidScale = prevSize !== null && rawSize > 1e-6 ? prevSize / rawSize : 1;
+    dualCentre = null;
+
+    currentSolidName = name;
+    currentFacePolygons = null;
+    faceColors = [];
+    currentVerts = rawVerts.map((v) => v.clone().multiplyScalar(currentSolidScale));
+    rebuildVertexSpheres(currentVerts);
+    hideAllVertexSpheres();
+
+    mode = "original";
+    pendingFacePolygons = [];
+    selectedIndices = [];
+    renderCurrentShape();
+
+    setActiveSolidButton(name);
+    dualBtn.disabled = false;
+    reorderBtn.disabled = false;
+    exportBtn.disabled = false;
+    reorderBtn.classList.remove("active");
+    uniformBtn.classList.add("hidden");
+    allReorderBtn.classList.add("hidden");
+    reorderBtn.textContent = "Reorder Convex Hull";
+    infoDiv.textContent = "Drag to rotate \u00b7 Scroll to zoom";
+
+    pushHistory();
+  }
+
+  // Applies a freshly computed dual: moves it so its bounding box is centred
+  // on the origin (the centre of rotation) and scales it so its farthest
+  // vertex is as far out as the previous shape's was, so nothing needs
+  // re-zooming or re-centring. `centre` is the point the dual was
+  // reciprocated about; it moves and scales along with the shape so the
+  // next dual can reuse it.
+  function applyCustomPolyhedron(newVerts, newFacePolygons, centre, colors) {
+    closeTruncationPanel(false);
+    closeStellationPanel(false);
+    const prevSize = currentVerts.length > 0 ? shapeSize(currentVerts) : null;
+    const newSize = shapeSize(newVerts);
+    const scale = prevSize !== null && newSize > 1e-6 ? prevSize / newSize : 1;
+    const shift = boundsCentre(newVerts);
+
+    currentVerts = newVerts.map((v) => v.clone().sub(shift).multiplyScalar(scale));
+    dualCentre = centre ? centre.clone().sub(shift).multiplyScalar(scale) : null;
+    currentFacePolygons = newFacePolygons;
+    faceColors = colors ? colors.slice() : newFacePolygons.map(() => null);
+    currentSolidName = null;
+    currentSolidScale = 1;
+    rebuildVertexSpheres(currentVerts);
+    hideAllVertexSpheres();
+
+    mode = "original";
+    pendingFacePolygons = [];
+    selectedIndices = [];
+    renderCurrentShape();
+
+    setActiveSolidButton(null);
+    dualBtn.disabled = false;
+    reorderBtn.disabled = false;
+    exportBtn.disabled = false;
+    reorderBtn.classList.remove("active");
+    uniformBtn.classList.add("hidden");
+    allReorderBtn.classList.add("hidden");
+    reorderBtn.textContent = "Reorder Convex Hull";
+    infoDiv.textContent = "Drag to rotate \u00b7 Scroll to zoom";
+
+    pushHistory();
+  }
+
+  // ---------------------------------------------------------------
+  // Undo / redo history. Only finalized shape changes are recorded
+  // (loading a solid, computing a dual, persisting a reorder session,
+  // importing) - not every intermediate click while building a face.
+  // ---------------------------------------------------------------
+  let history = [];
+  let historyIndex = -1;
+  let restoringHistory = false;
+
+  function snapshotState() {
+    return {
+      verts: currentVerts.map((v) => v.clone()),
+      facePolygons: currentFacePolygons ? currentFacePolygons.map((f) => f.slice()) : null,
+      solidName: currentSolidName,
+      solidScale: currentSolidScale,
+      faceColors: faceColors.slice(),
+      dualCentre: dualCentre ? dualCentre.clone() : null,
+    };
+  }
+
+  function updateUndoRedoButtons() {
+    undoBtn.disabled = historyIndex <= 0;
+    redoBtn.disabled = historyIndex >= history.length - 1;
+  }
+
+  function pushHistory() {
+    if (restoringHistory) return;
+    history = history.slice(0, historyIndex + 1);
+    history.push(snapshotState());
+    historyIndex = history.length - 1;
+    updateUndoRedoButtons();
+  }
+
+  function restoreState(state) {
+    closeTruncationPanel(false);
+    closeStellationPanel(false);
+    restoringHistory = true;
+
+    currentVerts = state.verts.map((v) => v.clone());
+    currentFacePolygons = state.facePolygons ? state.facePolygons.map((f) => f.slice()) : null;
+    currentSolidName = state.solidName;
+    currentSolidScale = state.solidScale;
+    faceColors = state.faceColors
+      ? state.faceColors.slice()
+      : currentFacePolygons ? currentFacePolygons.map(() => null) : [];
+    dualCentre = state.dualCentre ? state.dualCentre.clone() : null;
+    rebuildVertexSpheres(currentVerts);
+    hideAllVertexSpheres();
+
+    mode = "original";
+    pendingFacePolygons = [];
+    selectedIndices = [];
+    renderCurrentShape();
+
+    setActiveSolidButton(currentSolidName);
+    dualBtn.disabled = false;
+    reorderBtn.disabled = false;
+    exportBtn.disabled = false;
+    reorderBtn.classList.remove("active");
+    uniformBtn.classList.add("hidden");
+    allReorderBtn.classList.add("hidden");
+    reorderBtn.textContent = "Reorder Convex Hull";
+    infoDiv.textContent = "Drag to rotate \u00b7 Scroll to zoom";
+
+    restoringHistory = false;
+    updateUndoRedoButtons();
+  }
+
+  function undo() {
+    if (historyIndex <= 0) return;
+    historyIndex--;
+    restoreState(history[historyIndex]);
+  }
+
+  function redo() {
+    if (historyIndex >= history.length - 1) return;
+    historyIndex++;
+    restoreState(history[historyIndex]);
+  }
+
+  // ---------------------------------------------------------------
+  // Menu wiring
+  // ---------------------------------------------------------------
+  const loadSolidToggle = document.getElementById("loadSolidToggle");
+  const solidSubmenu = document.getElementById("solidSubmenu");
+  const solidButtons = document.querySelectorAll("#solidSubmenu button[data-solid]");
+  const dualBtn = document.getElementById("dualBtn");
+  const reorderBtn = document.getElementById("reorderBtn");
+  const uniformBtn = document.getElementById("uniformBtn");
+  const allReorderBtn = document.getElementById("allReorderBtn");
+  const exportBtn = document.getElementById("exportBtn");
+  const importBtn = document.getElementById("importBtn");
+  const undoBtn = document.getElementById("undoBtn");
+  const redoBtn = document.getElementById("redoBtn");
+  const infoDiv = document.getElementById("info");
+
+  undoBtn.addEventListener("click", undo);
+  redoBtn.addEventListener("click", redo);
+
+  document.addEventListener("keydown", (e) => {
+    if (mode === "custom") return; // Space is used for face-building there
+    const key = e.key.toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && key === "z" && !e.shiftKey) {
+      e.preventDefault();
+      undo();
+    } else if ((e.ctrlKey || e.metaKey) && (key === "y" || (key === "z" && e.shiftKey))) {
+      e.preventDefault();
+      redo();
+    }
+  });
+
+  loadSolidToggle.addEventListener("click", () => {
+    solidSubmenu.classList.toggle("hidden");
+  });
+
+  function setActiveSolidButton(name) {
+    solidButtons.forEach((b) => {
+      b.classList.toggle("active", b.dataset.solid === name);
+    });
+  }
+
+  solidButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      loadSolid(btn.dataset.solid);
+      solidSubmenu.classList.add("hidden");
+    });
+  });
+
+  dualBtn.addEventListener("click", () => {
+    if (!currentVerts.length) return;
+
+    if (!currentFacePolygons) {
+      // Still one of the five named solids - use the exact known dual
+      loadSolid(DUAL_MAP[currentSolidName]);
+      return;
+    }
+
+    const dual = computeDualPolyhedron(currentVerts, currentFacePolygons, dualCentre);
+    if (dual.faces.length === 0) {
+      infoDiv.textContent = "Can't compute a dual from this shape";
+      return;
+    }
+    const pruned = pruneUnusedVertices(dual.vertices, dual.faces);
+    applyCustomPolyhedron(pruned.vertices, pruned.faces, dual.centre);
+  });
+
+  reorderBtn.addEventListener("click", () => {
+    if (!currentVerts.length) return;
+
+    if (mode !== "custom") {
+      // Enter reorder mode: strip faces, show all points
+      closeTruncationPanel(false);
+    closeStellationPanel(false);
+      setPainting(false);
+      mode = "custom";
+      pendingFacePolygons = [];
+      pendingFaceColors = [];
+      lastUserFace = null;
+      reorderBacklog = null;
+      clearAllSelectionHighlights();
+      setFaceGeometry(null);
+      updateSelectablePoints();
+      reorderBtn.classList.add("active");
+      uniformBtn.classList.remove("hidden");
+      allReorderBtn.classList.remove("hidden");
+      reorderBtn.textContent = "Exit Reorder Mode";
+      const kinds = colourPointsBySymmetry();
+      infoDiv.textContent =
+        "Click coplanar points, then press Space to add a face \u00b7 " +
+        (kinds <= 0
+          ? "points are uncoloured (couldn't work out their symmetry)"
+          : kinds === 1
+          ? "all points are alike"
+          : kinds + " kinds of point (same colour = symmetrically alike) \u00b7 select a point, then Tab to see from it");
+    } else {
+      // Exit reorder mode: persist whatever faces were built as the new shape
+      mode = "original";
+      clearAllSelectionHighlights();
+      if (pendingFacePolygons.length > 0) {
+        const wound = normalizeFaceWinding(currentVerts, pendingFacePolygons);
+        const pruned = pruneUnusedVertices(currentVerts, wound);
+        currentVerts = pruned.vertices;
+        currentFacePolygons = pruned.faces;
+        faceColors = pruned.faces.map((_, i) => pendingFaceColors[i] || null);
+        currentSolidName = null;
+        dualCentre = null;
+        rebuildVertexSpheres(currentVerts);
+        setActiveSolidButton(null);
+      }
+      pendingFacePolygons = [];
+      renderCurrentShape();
+      hideAllVertexSpheres();
+      reorderBtn.classList.remove("active");
+    uniformBtn.classList.add("hidden");
+    allReorderBtn.classList.add("hidden");
+      reorderBtn.textContent = "Reorder Convex Hull";
+      infoDiv.textContent = "Drag to rotate \u00b7 Scroll to zoom";
+      pushHistory();
+    }
+  });
+
+  // Colours every point by its kind (see computeVertexOrbits), so which
+  // points are interchangeable is visible at a glance. A shape with only
+  // one kind keeps the plain point colour.
+  function colourPointsBySymmetry() {
+    let kinds = 0;
+    colorRelative = false;
+    try {
+      symmetryPerms = findPointSetSymmetries(currentVerts);
+      const { kindOf, count } = orbitsFromPerms(currentVerts.length, symmetryPerms);
+      kinds = count;
+      globalColorHex = kindOf.map((k) => (count === 1 ? pointColorHex : kindColorHex(k)));
+    } catch (err) {
+      symmetryPerms = null;
+      globalColorHex = [];
+      kinds = 0;
+    }
+    recolorPoints();
+    return kinds;
+  }
+
+  // Paints every point for the current colouring mode (Tab switches
+  // between the two). Overall: points that are symmetrically alike share
+  // a colour. Second mode, with ONE point selected: that point is treated
+  // as the origin, so only the symmetries that leave IT in place count -
+  // two points share a colour when one of those carries the other to it
+  // (on an icosahedron: the point, its 5 neighbours, the 5 next out, and
+  // the opposite point, as four colours). Second mode, with TWO or more
+  // selected: points share a colour when they lie in the same plane with
+  // the two latest selected points. Selected points always stay amber.
+  function recolorPoints() {
+    const sel = selectedIndices;
+    if (colorRelative && sel.length >= 2) {
+      const ib = sel[sel.length - 1], ia = sel[sel.length - 2];
+      const { kindOf } = planeKindsThroughTwo(currentVerts, ia, ib);
+      vertexColorHex = kindOf.map((k) => (k < 0 ? 0xcfd6e4 : kindColorHex(k)));
+    } else if (colorRelative && sel.length === 1 && symmetryPerms) {
+      const origin = sel[0];
+      const stabiliser = symmetryPerms.filter((perm) => perm[origin] === origin);
+      const { kindOf } = orbitsFromPerms(currentVerts.length, stabiliser);
+      vertexColorHex = kindOf.map((k) => kindColorHex(k));
+    } else {
+      vertexColorHex = globalColorHex.slice();
+    }
+    vertexSpheres.forEach((sphere, i) => {
+      if (sel.includes(i)) sphere.material.color.setHex(highlightColorHex);
+      else resetSphereColor(i);
+    });
+  }
+
+  function colouringDescription() {
+    if (!colorRelative) {
+      return "Coloured by overall symmetry (same colour = symmetrically alike) \u00b7 Tab to switch";
+    }
+    if (selectedIndices.length >= 2) {
+      return "Coloured by plane with the two latest points (same colour = coplanar with them, grey = on the line between them) \u00b7 Tab to switch back";
+    }
+    return "Coloured as seen from the selected point (same colour = alike from there) \u00b7 Tab to switch back";
+  }
+
+  // "Create face uniformly": copy the last hand-made face to every place
+  // the shape's own symmetry puts it. The copies use exactly the points
+  // that are symmetrically similar to the face's points (same distance
+  // from the centre, same arrangement of points around them) - so on a
+  // shape where only some points are alike, only those get a copy.
+  uniformBtn.addEventListener("click", () => {
+    if (mode !== "custom") return;
+    if (!lastUserFace) {
+      infoDiv.textContent = "Make a face first (select points, press Space), then copy it uniformly";
+      return;
+    }
+    const symmetries = findPointSetSymmetries(currentVerts);
+    const seen = new Set(pendingFacePolygons.map(faceCycleKey));
+    let added = 0;
+    symmetries.forEach((perm) => {
+      const copy = lastUserFace.map((i) => perm[i]);
+      if (new Set(copy).size < copy.length) return;
+      const key = faceCycleKey(copy);
+      if (seen.has(key)) return;
+      seen.add(key);
+      pendingFacePolygons.push(copy);
+      pendingFaceColors.push(lastUserFaceColor);
+      added++;
+    });
+    if (added) {
+      setFaceGeometry(geometryFromFacePolygons(currentVerts, pendingFacePolygons, pendingFaceColors));
+      infoDiv.textContent = "Added " + added + " matching face" + (added === 1 ? "" : "s");
+    } else if (symmetries.length <= 1) {
+      infoDiv.textContent = "These points have no symmetry to copy the face across";
+    } else {
+      infoDiv.textContent = "Every symmetric copy of that face already exists";
+    }
+  });
+
+  // ---------------------------------------------------------------
+  // Components: a box of saved polyhedra on the left. Save the current
+  // shape, load a saved one, or ADD one to the current shape to make a
+  // compound (the two overlaid as one shape).
+  // ---------------------------------------------------------------
+  const componentList = document.getElementById("componentList");
+  const componentsEmpty = document.getElementById("componentsEmpty");
+  const componentsCount = document.getElementById("componentsCount");
+  const addComponentBtn = document.getElementById("addComponentBtn");
+  let components = [];
+  let allReorderToken = 0;
+  let reorderBacklog = null; // search results waiting to be added, a batch per press
+
+  function uniqueComponentName(base) {
+    if (!components.some((c) => c.name === base)) return base;
+    let k = 2;
+    while (components.some((c) => c.name === base + " (" + k + ")")) k++;
+    return base + " (" + k + ")";
+  }
+
+  function polyhedronCounts(comp) {
+    const edges = new Set();
+    comp.faces.forEach((f) =>
+      f.forEach((a, i) => {
+        const b = f[(i + 1) % f.length];
+        edges.add(a < b ? a + "_" + b : b + "_" + a);
+      })
+    );
+    return (
+      comp.verts.length + " vertices \u00b7 " + edges.size + " edges \u00b7 " + comp.faces.length + " faces" +
+      (comp.closed === false ? " \u00b7 open" : "")
+    );
+  }
+
+  function currentAsComponent() {
+    const shape = currentPolygonShape();
+    if (!shape || shape.faces.length === 0) return null;
+    return {
+      verts: shape.verts.map((v) => v.clone()),
+      faces: shape.faces.map((f) => f.slice()),
+      colors: currentFacePolygons ? faceColors.slice() : shape.faces.map(() => null),
+      closed: facesFormClosedSurface(shape.faces),
+    };
+  }
+
+  function loadComponentAsShape(comp) {
+    if (mode === "custom") {
+      infoDiv.textContent = "Exit reorder mode before loading a component";
+      return;
+    }
+    applyCustomPolyhedron(
+      comp.verts.map((v) => v.clone()),
+      comp.faces.map((f) => f.slice()),
+      null,
+      comp.colors.slice()
+    );
+  }
+
+  function addComponentToCurrentShape(comp) {
+    if (mode === "custom") {
+      infoDiv.textContent = "Exit reorder mode before adding a component";
+      return;
+    }
+    const base = currentAsComponent();
+    if (!base) return;
+    const merged = combinePolyhedra(base, comp);
+    applyCustomPolyhedron(merged.verts, merged.faces, null, merged.colors);
+    infoDiv.textContent = "Added " + comp.name + " to the shape as a compound";
+  }
+
+  function renderComponentList() {
+    componentList.innerHTML = "";
+    componentsCount.textContent = "(" + components.length + ")";
+    componentsEmpty.style.display = components.length ? "none" : "block";
+    components.forEach((comp, idx) => {
+      const row = document.createElement("div");
+      row.className = "compRow";
+      const name = document.createElement("div");
+      name.className = "compName";
+      name.textContent = comp.name;
+      const meta = document.createElement("div");
+      meta.className = "compMeta";
+      meta.textContent = polyhedronCounts(comp);
+      const btns = document.createElement("div");
+      btns.className = "compBtns";
+      const mk = (label, title, fn) => {
+        const b = document.createElement("button");
+        b.className = "compBtn";
+        b.textContent = label;
+        b.title = title;
+        b.addEventListener("click", fn);
+        btns.appendChild(b);
+      };
+      mk("Add", "Add this polyhedron to the current shape (makes a compound)", () => addComponentToCurrentShape(comp));
+      mk("Load", "Replace the current shape with this one", () => loadComponentAsShape(comp));
+      mk("\u2715", "Remove from components", () => {
+        components.splice(idx, 1);
+        renderComponentList();
+      });
+      row.appendChild(name);
+      row.appendChild(meta);
+      row.appendChild(btns);
+      componentList.appendChild(row);
+    });
+  }
+
+  addComponentBtn.addEventListener("click", () => {
+    if (mode === "custom") {
+      infoDiv.textContent = "Exit reorder mode before saving the shape";
+      return;
+    }
+    const comp = currentAsComponent();
+    if (!comp) return;
+    const sig = polyhedronSignature(comp.verts, comp.faces);
+    if (components.some((c) => polyhedronSignature(c.verts, c.faces) === sig)) {
+      infoDiv.textContent = "That shape is already in the components box";
+      return;
+    }
+    const base = currentSolidName
+      ? currentSolidName.charAt(0).toUpperCase() + currentSolidName.slice(1)
+      : "Shape";
+    comp.name = uniqueComponentName(base);
+    components.push(comp);
+    renderComponentList();
+    infoDiv.textContent = "Saved " + comp.name + " to components";
+  });
+
+  // Adds the next batch of the stored search results to the components
+  // box. A big shape can have thousands of (mostly open) reorderings, so
+  // they come 100 at a time; press the button again for more.
+  function addReorderingBatch() {
+    const BATCH = 100;
+    const bl = reorderBacklog;
+    if (!bl) return;
+    if (bl.next >= bl.results.length) {
+      infoDiv.textContent = "Every uniform reordering of these points has already been added";
+      return;
+    }
+    const colour = paintColor;
+    let added = 0, already = 0;
+    while (bl.next < bl.results.length && added < BATCH) {
+      const res = bl.results[bl.next++];
+      const wound = normalizeFaceWinding(bl.points, res.faces);
+      const pruned = pruneUnusedVertices(bl.points, wound);
+      const sig = polyhedronSignature(pruned.vertices, pruned.faces);
+      if (components.some((c) => polyhedronSignature(c.verts, c.faces) === sig)) {
+        already++;
+        continue;
+      }
+      components.push({
+        name: uniqueComponentName(reorderingName(pruned.faces.length, res.sides, res.step)),
+        verts: pruned.vertices,
+        faces: pruned.faces,
+        colors: pruned.faces.map(() => colour),
+        closed: res.closed,
+      });
+      added++;
+    }
+    renderComponentList();
+    const left = bl.results.length - bl.next;
+    infoDiv.textContent =
+      "Added " + added + " uniform reordering" + (added === 1 ? "" : "s") + " to components (closed ones first)" +
+      (already ? ", " + already + " already there" : "") +
+      (left > 0 ? " \u00b7 " + left + " more - press again for the next batch" : " \u00b7 that's all of them");
+  }
+
+  // Searches for every uniform reordering of the points (see
+  // enumerateUniformReorderingsGen) to the box, searching in small slices
+  // so the page stays responsive on big shapes.
+  allReorderBtn.addEventListener("click", () => {
+    if (mode !== "custom" || allReorderBtn.disabled) return;
+    if (!symmetryPerms || symmetryPerms.length <= 1) {
+      infoDiv.textContent = "These points have no symmetry, so there are no uniform reorderings to add";
+      return;
+    }
+    if (reorderBacklog) {
+      addReorderingBatch();
+      return;
+    }
+    const token = ++allReorderToken;
+    const points = currentVerts.map((v) => v.clone());
+    const gen = enumerateUniformReorderingsGen(points, symmetryPerms);
+    const label = allReorderBtn.textContent;
+    allReorderBtn.disabled = true;
+    allReorderBtn.textContent = "Searching\u2026";
+
+    function stop() {
+      allReorderBtn.disabled = false;
+      allReorderBtn.textContent = label;
+    }
+    function finish(outcome) {
+      stop();
+      // Closed surfaces first, then the simplest faces first, plain
+      // polygons before stars, fewer faces before more.
+      const sorted = outcome.results.slice().sort(
+        (x, y) =>
+          (y.closed ? 1 : 0) - (x.closed ? 1 : 0) ||
+          x.sides - y.sides ||
+          x.step - y.step ||
+          x.faces.length - y.faces.length
+      );
+      if (sorted.length === 0) {
+        infoDiv.textContent = "These points have no uniform reorderings";
+        return;
+      }
+      reorderBacklog = { points, results: sorted, next: 0 };
+      addReorderingBatch();
+    }
+    function slice() {
+      if (token !== allReorderToken || mode !== "custom") {
+        stop();
+        return;
+      }
+      const until = performance.now() + 30;
+      let last = null;
+      for (;;) {
+        const step = gen.next();
+        if (step.done) {
+          finish(step.value);
+          return;
+        }
+        last = step.value;
+        if (performance.now() > until) break;
+      }
+      infoDiv.textContent =
+        "Searching uniform reorderings\u2026 " + last.scanned + " candidate faces checked, " +
+        last.results.length + " found";
+      setTimeout(slice, 0);
+    }
+    slice();
+  });
+
+  renderComponentList();
+
+  // ---------------------------------------------------------------
+  // Import / export the current polyhedron as a text string
+  // ---------------------------------------------------------------
+  // Matches each triangle corner of a (possibly rescaled) geometry to the
+  // nearest vertex in `verts`, so tiny rounding differences can't drop faces.
+  function facesFromRawGeometry(geometry, verts) {
+    const pos = geometry.attributes.position;
+    const p = new THREE.Vector3();
+    function nearest(j) {
+      p.set(pos.getX(j), pos.getY(j), pos.getZ(j));
+      let best = -1;
+      let bestD = Infinity;
+      verts.forEach((v, i) => {
+        const d = v.distanceTo(p);
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      return bestD < 1e-2 ? best : undefined;
+    }
+    // BoxGeometry (the cube) is indexed: its triangles are listed in
+    // geometry.index, not as consecutive position triples like the others.
+    const index = geometry.index;
+    const count = index ? index.count : pos.count;
+    const corner = (k) => (index ? index.getX(k) : k);
+    const faces = [];
+    for (let i = 0; i + 2 < count; i += 3) {
+      const tri = [nearest(corner(i)), nearest(corner(i + 1)), nearest(corner(i + 2))];
+      if (tri.every((idx) => idx !== undefined)) faces.push(tri);
+    }
+    return faces;
+  }
+
+  function getExportData() {
+    let faces;
+    if (currentFacePolygons) {
+      faces = currentFacePolygons;
+    } else if (currentSolidName) {
+      const geometry = SOLID_GEOMETRIES[currentSolidName]();
+      geometry.scale(currentSolidScale, currentSolidScale, currentSolidScale);
+      faces = facesFromRawGeometry(geometry, currentVerts);
+    } else {
+      faces = [];
+    }
+    return {
+      vertices: currentVerts.map((v) => [
+        +v.x.toPrecision(14),
+        +v.y.toPrecision(14),
+        +v.z.toPrecision(14),
+      ]),
+      faces,
+      ...(currentFacePolygons && faceColors.some((c) => c) ? { colors: faceColors } : {}),
+    };
+  }
+
+  function loadPolyhedronFromData(data) {
+    closeTruncationPanel(false);
+    closeStellationPanel(false);
+    if (!data || !Array.isArray(data.vertices) || !Array.isArray(data.faces)) {
+      throw new Error("Expected an object with 'vertices' and 'faces' arrays");
+    }
+    const verts = data.vertices.map(([x, y, z]) => new THREE.Vector3(x, y, z));
+    const wound = normalizeFaceWinding(verts, data.faces);
+    const pruned = pruneUnusedVertices(verts, wound);
+
+    currentVerts = pruned.vertices;
+    currentFacePolygons = pruned.faces;
+    faceColors = pruned.faces.map((_, i) => {
+      const c = Array.isArray(data.colors) ? data.colors[i] : null;
+      return typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c) ? c : null;
+    });
+    currentSolidName = null;
+    currentSolidScale = 1;
+    dualCentre = null;
+    rebuildVertexSpheres(currentVerts);
+    hideAllVertexSpheres();
+
+    mode = "original";
+    pendingFacePolygons = [];
+    selectedIndices = [];
+    renderCurrentShape();
+
+    setActiveSolidButton(null);
+    dualBtn.disabled = false;
+    reorderBtn.disabled = false;
+    exportBtn.disabled = false;
+    reorderBtn.classList.remove("active");
+    uniformBtn.classList.add("hidden");
+    allReorderBtn.classList.add("hidden");
+    reorderBtn.textContent = "Reorder Convex Hull";
+    infoDiv.textContent = "Drag to rotate \u00b7 Scroll to zoom";
+    pushHistory();
+  }
+
+  // ---------------------------------------------------------------
+  // Modal (used for both export and import) - a real in-page dialog
+  // rather than window.prompt()/alert(), since those are blocked
+  // entirely in some sandboxed preview environments.
+  // ---------------------------------------------------------------
+  const modalOverlay = document.getElementById("modalOverlay");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalTextarea = document.getElementById("modalTextarea");
+  const modalStatus = document.getElementById("modalStatus");
+  const modalPrimaryBtn = document.getElementById("modalPrimaryBtn");
+  const modalCancelBtn = document.getElementById("modalCancelBtn");
+
+  function openModal({ title, initialText, readOnly, primaryLabel, onPrimary }) {
+    modalTitle.textContent = title;
+    modalTextarea.value = initialText || "";
+    modalTextarea.readOnly = !!readOnly;
+    modalStatus.textContent = "";
+    modalPrimaryBtn.textContent = primaryLabel;
+    modalPrimaryBtn.onclick = () => onPrimary(modalTextarea.value);
+    modalOverlay.classList.remove("hidden");
+    modalTextarea.focus();
+    modalTextarea.select();
+  }
+
+  function closeModal() {
+    modalOverlay.classList.add("hidden");
+  }
+
+  modalCancelBtn.addEventListener("click", closeModal);
+  modalOverlay.addEventListener("click", (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  exportBtn.addEventListener("click", () => {
+    if (!currentVerts.length) return;
+    const text = JSON.stringify(getExportData());
+    openModal({
+      title: "Export Polyhedron",
+      initialText: text,
+      readOnly: true,
+      primaryLabel: "Copy to Clipboard",
+      onPrimary: async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          modalStatus.textContent = "Copied!";
+        } catch (err) {
+          modalTextarea.focus();
+          modalTextarea.select();
+          modalStatus.textContent = "Clipboard access blocked here - text is selected, press Ctrl+C (or Cmd+C) to copy it.";
+        }
+      },
+    });
+  });
+
+  importBtn.addEventListener("click", () => {
+    openModal({
+      title: "Import Polyhedron",
+      initialText: "",
+      readOnly: false,
+      primaryLabel: "Load",
+      onPrimary: (text) => {
+        if (!text.trim()) {
+          modalStatus.textContent = "Paste some polyhedron text first.";
+          return;
+        }
+        try {
+          const data = JSON.parse(text);
+          loadPolyhedronFromData(data);
+          closeModal();
+        } catch (err) {
+          modalStatus.textContent = "Couldn't load that text: " + err.message;
+        }
+      },
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // Settings panel
+  // ---------------------------------------------------------------
+  const settingsBtn = document.getElementById("settingsBtn");
+  const settingsPanel = document.getElementById("settingsPanel");
+  const transparentToggle = document.getElementById("transparentToggle");
+
+  settingsBtn.addEventListener("click", () => {
+    settingsPanel.classList.toggle("hidden");
+  });
+
+  transparentToggle.addEventListener("change", () => {
+    settings.transparent = transparentToggle.checked;
+    reapplyFaceMaterialSettings();
+    if (stellActive) renderStellationView();
+  });
+
+  // ---------------------------------------------------------------
+  // Picking a vertex (used only in custom face-building mode)
+  // ---------------------------------------------------------------
+  const raycaster = new THREE.Raycaster();
+  const mouseNDC = new THREE.Vector2();
+
+  function trySelectPointAt(clientX, clientY) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouseNDC.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    mouseNDC.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouseNDC, camera);
+
+    const selectable = vertexSpheres.filter((s) => s.visible);
+    const hits = raycaster.intersectObjects(selectable);
+    if (hits.length === 0) return;
+
+    const sphere = hits[0].object;
+    const idx = sphere.userData.index;
+    if (!selectedIndices.includes(idx)) {
+      selectedIndices.push(idx);
+      sphere.material.color.setHex(highlightColorHex);
+      updateSelectablePoints();
+      if (colorRelative) {
+        recolorPoints();
+        infoDiv.textContent = colouringDescription();
+      }
+    }
+  }
+
+  function tryCreateFaceFromSelection() {
+    if (selectedIndices.length >= 3) {
+      pendingFacePolygons.push(selectedIndices.slice());
+      pendingFaceColors.push(paintColor);
+      lastUserFace = selectedIndices.slice();
+      lastUserFaceColor = paintColor;
+      rememberColor(paintColor);
+      setFaceGeometry(geometryFromFacePolygons(currentVerts, pendingFacePolygons, pendingFaceColors));
+    }
+    clearAllSelectionHighlights();
+    updateSelectablePoints();
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "Space" && mode === "custom") {
+      e.preventDefault();
+      tryCreateFaceFromSelection();
+    }
+  });
+
+  // Tab: switch between colouring by overall symmetry and colouring as
+  // seen from the selected point (the most recently selected one).
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab" || mode !== "custom") return;
+    const tag = e.target && e.target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    e.preventDefault();
+    if (selectedIndices.length === 0) {
+      infoDiv.textContent = "Select a point first, then press Tab to colour the others as seen from it";
+      return;
+    }
+    if (selectedIndices.length === 1 && !symmetryPerms) {
+      infoDiv.textContent = "Couldn't work out this shape's symmetry";
+      return;
+    }
+    colorRelative = !colorRelative;
+    recolorPoints();
+    infoDiv.textContent = colouringDescription();
+  });
+
+  // ---------------------------------------------------------------
+  // Mouse-drag rotation around the origin, plus click-to-select
+  // ---------------------------------------------------------------
+  let isDragging = false;
+  let dragMoved = false;
+  let prevX = 0;
+  let prevY = 0;
+  let downX = 0;
+  let downY = 0;
+
+  const rotationSpeed = 0.005;
+  const dragThreshold = 4;
+
+  // Rotate around fixed world-space axes (screen-horizontal and
+  // screen-vertical), applied via quaternion premultiply. Accumulating
+  // local Euler angles instead (worldGroup.rotation.x/y +=) causes drag
+  // direction to invert once the object has been rotated far enough
+  // (e.g. upside down) - premultiplying by a world-space delta keeps
+  // "drag left" always meaning the same thing on screen, no matter how
+  // the shape is currently oriented.
+  const worldUp = new THREE.Vector3(0, 1, 0);
+  const worldRight = new THREE.Vector3(1, 0, 0);
+  const dragYaw = new THREE.Quaternion();
+  const dragPitch = new THREE.Quaternion();
+
+  function applyDragRotation(dx, dy) {
+    dragYaw.setFromAxisAngle(worldUp, dx * rotationSpeed);
+    dragPitch.setFromAxisAngle(worldRight, dy * rotationSpeed);
+    worldGroup.quaternion.premultiply(dragYaw);
+    worldGroup.quaternion.premultiply(dragPitch);
+  }
+
+  renderer.domElement.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    dragMoved = false;
+    prevX = downX = e.clientX;
+    prevY = downY = e.clientY;
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - prevX;
+    const dy = e.clientY - prevY;
+    prevX = e.clientX;
+    prevY = e.clientY;
+
+    if (Math.abs(e.clientX - downX) > dragThreshold || Math.abs(e.clientY - downY) > dragThreshold) {
+      dragMoved = true;
+    }
+
+    applyDragRotation(dx, dy);
+  });
+
+  window.addEventListener("mouseup", (e) => {
+    if (isDragging && !dragMoved) {
+      if (mode === "custom") trySelectPointAt(e.clientX, e.clientY);
+      else if (painting) tryPaintFaceAt(e.clientX, e.clientY);
+    }
+    isDragging = false;
+  });
+
+  // Touch support (single-finger drag to rotate, tap to select)
+  let lastTouchX = 0;
+  let lastTouchY = 0;
+  let touchDownX = 0;
+  let touchDownY = 0;
+  let touchMoved = false;
+
+  renderer.domElement.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 1) {
+      lastTouchX = touchDownX = e.touches[0].clientX;
+      lastTouchY = touchDownY = e.touches[0].clientY;
+      touchMoved = false;
+    }
+  });
+
+  renderer.domElement.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 1) {
+      const dx = e.touches[0].clientX - lastTouchX;
+      const dy = e.touches[0].clientY - lastTouchY;
+      lastTouchX = e.touches[0].clientX;
+      lastTouchY = e.touches[0].clientY;
+
+      if (Math.abs(e.touches[0].clientX - touchDownX) > dragThreshold ||
+          Math.abs(e.touches[0].clientY - touchDownY) > dragThreshold) {
+        touchMoved = true;
+      }
+
+      applyDragRotation(dx, dy);
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  renderer.domElement.addEventListener("touchend", () => {
+    if (!touchMoved) {
+      if (mode === "custom") trySelectPointAt(lastTouchX, lastTouchY);
+      else if (painting) tryPaintFaceAt(lastTouchX, lastTouchY);
+    }
+  });
+
+  // Scroll to zoom
+  renderer.domElement.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+      const zoomSpeed = 0.001;
+      const newZ = camera.position.z * (1 + e.deltaY * zoomSpeed);
+      camera.position.z = Math.min(Math.max(newZ, 2), 60);
+    },
+    { passive: false }
+  );
+
+  window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    if (stellGlowMaterials.length) {
+      // Two materials pulse together but out of phase with each other:
+      // the halo breathes wide while the sharp line stays crisp but
+      // still brightens/dims, reading as one glowing outline rather
+      // than a flat highlight colour.
+      const t = performance.now() * 0.0035;
+      const haloMat = stellGlowMaterials[0];
+      const sharpMat = stellGlowMaterials[1];
+      if (haloMat) haloMat.opacity = 0.3 + 0.35 * (0.5 + 0.5 * Math.sin(t));
+      if (sharpMat) sharpMat.opacity = 0.75 + 0.25 * (0.5 + 0.5 * Math.sin(t + Math.PI / 2));
+    }
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // ---------------------------------------------------------------
+  // Truncation slider: live preview while dragging, Apply makes it the
+  // new polyhedron (so dual, reorder, undo etc. all work on the result).
+  // ---------------------------------------------------------------
+  const truncBtn = document.getElementById("truncBtn");
+  const truncPanel = document.getElementById("truncPanel");
+  const truncSlider = document.getElementById("truncSlider");
+  const truncLabel = document.getElementById("truncLabel");
+  const truncApply = document.getElementById("truncApply");
+  const truncCancel = document.getElementById("truncCancel");
+  let truncating = false;
+  let truncSource = null;
+  let truncColors = null;
+
+  // Original faces keep their colour; the new corner faces get `newColor`.
+  function carryColors(origin, colors, newColor) {
+    return origin.map((o) => (o >= 0 ? (colors && colors[o]) || null : newColor));
+  }
+
+  function closeTruncationPanel(restoreView) {
+    if (!truncating) return;
+    truncating = false;
+    truncPanel.classList.add("hidden");
+    truncBtn.classList.remove("active");
+    if (restoreView) renderCurrentShape();
+  }
+
+  function updateTruncationPreview() {
+    const pct = Number(truncSlider.value);
+    truncLabel.textContent =
+      pct === 0 ? "Truncation: none" : pct === 100 ? "Rectification" : "Truncation: " + pct + "%";
+    if (pct === 0) {
+      renderCurrentShape();
+      return;
+    }
+    const result = truncatePolyhedron(truncSource.verts, truncSource.faces, (pct / 100) * 0.5);
+    if (result.error) {
+      infoDiv.textContent = "Can't truncate: " + result.error;
+      return;
+    }
+    const preview = fitToCurrentSize(result.vertices);
+    setFaceGeometry(
+      geometryFromFacePolygons(preview, result.faces, carryColors(result.origin, truncColors, paintColor))
+    );
+  }
+
+  truncBtn.addEventListener("click", () => {
+    if (truncating) {
+      closeTruncationPanel(true);
+      return;
+    }
+    if (mode === "custom") {
+      infoDiv.textContent = "Exit reorder mode before truncating";
+      return;
+    }
+    closeStellationPanel(true);
+    const shape = currentPolygonShape();
+    if (!shape || shape.faces.length === 0) return;
+    const probe = truncatePolyhedron(shape.verts, shape.faces, 0.25);
+    if (probe.error) {
+      infoDiv.textContent = "Can't truncate: " + probe.error;
+      return;
+    }
+    truncSource = shape;
+    truncColors = currentFacePolygons ? faceColors.slice() : null;
+    truncating = true;
+    truncSlider.value = 0;
+    truncPanel.classList.remove("hidden");
+    truncBtn.classList.add("active");
+    updateTruncationPreview();
+  });
+
+  truncSlider.addEventListener("input", updateTruncationPreview);
+  truncCancel.addEventListener("click", () => closeTruncationPanel(true));
+
+  truncApply.addEventListener("click", () => {
+    if (!truncating) return;
+    const pct = Number(truncSlider.value);
+    if (pct === 0) {
+      closeTruncationPanel(true);
+      return;
+    }
+    const result = truncatePolyhedron(truncSource.verts, truncSource.faces, (pct / 100) * 0.5);
+    if (result.error) {
+      infoDiv.textContent = "Can't truncate: " + result.error;
+      return;
+    }
+    closeTruncationPanel(false);
+    closeStellationPanel(false);
+    const pruned = pruneUnusedVertices(result.vertices, result.faces);
+    rememberColor(paintColor);
+    applyCustomPolyhedron(
+      pruned.vertices,
+      pruned.faces,
+      null,
+      carryColors(result.origin, truncColors, paintColor)
+    );
+  });
+
+  // ---------------------------------------------------------------
+  // Stellation map UI: extend every face's plane, let the user step
+  // through the resulting regions with the arrow keys and switch each
+  // one in/out of the shape with Space.
+  // ---------------------------------------------------------------
+  const stellMapBtn = document.getElementById("stellMapBtn");
+  const stellPanel = document.getElementById("stellPanel");
+  const stellLabel = document.getElementById("stellLabel");
+  const stellApply = document.getElementById("stellApply");
+  const stellCancel = document.getElementById("stellCancel");
+
+  let stellActive = false;
+  let stellRegions = null;
+  let stellFocused = null;
+  let stellObjects = [];
+  let stellOriginalColors = null; // faceColors as they were before this session, for untouched originals
+  let stellMergeGroups = [];      // each entry: [toggledOffRegion, ...revealedNeighbours] -> becomes ONE face
+
+  function clearStellObjects() {
+    stellObjects.forEach((o) => {
+      shapeGroup.remove(o);
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) o.material.dispose();
+    });
+    stellObjects = [];
+    stellGlowMaterials = [];
+  }
+
+  function stellCellPoints3D(region) {
+    return region.poly2D.map((p2) => stellTo3D(p2, region.plane));
+  }
+  function stellCellTriangles(region) {
+    const pts = stellCellPoints3D(region);
+    const tris = [];
+    for (let i = 1; i < pts.length - 1; i++) tris.push([pts[0], pts[i], pts[i + 1]]);
+    return tris;
+  }
+  function stellCellEdgePoints(region) {
+    const pts = stellCellPoints3D(region);
+    const segs = [];
+    for (let i = 0; i < pts.length; i++) segs.push(pts[i], pts[(i + 1) % pts.length]);
+    return segs;
+  }
+  function stellLineGeometry(points) {
+    const positions = new Float32Array(points.length * 3);
+    points.forEach((p, i) => {
+      positions[i * 3] = p.x;
+      positions[i * 3 + 1] = p.y;
+      positions[i * 3 + 2] = p.z;
+    });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    return geo;
+  }
+
+  // A region's colour while previewing: a face popped open this session
+  // shows the colour currently selected in the Colors tab (so it reads
+  // as "pending"), untouched original faces keep whatever colour they
+  // already had.
+  function stellRegionColor(region) {
+    // A face that's been stellated (its old cells AND the cells added to
+    // it) is now one face, so all of it shows in the selected colour -
+    // the same colour it will have once applied.
+    if (region.addedThisSession || region.locked) return paintColor;
+    if (stellOriginalColors && stellOriginalColors[region.face]) return stellOriginalColors[region.face];
+    return faceColorHex;
+  }
+
+  function renderStellationView() {
+    clearStellObjects();
+    if (!stellRegions || stellRegions.length === 0) return;
+
+    // Every region's outline, dim, so the whole diagram is visible.
+    const dimPts = [];
+    stellRegions.forEach((r) => dimPts.push(...stellCellEdgePoints(r)));
+    if (dimPts.length) {
+      const lines = new THREE.LineSegments(
+        stellLineGeometry(dimPts),
+        new THREE.LineBasicMaterial({ color: 0x3a4356, transparent: true, opacity: 0.6 })
+      );
+      shapeGroup.add(lines);
+      stellObjects.push(lin);
+    }
+
+    // Regions that are "on": a solid mesh, each region's triangles tinted
+    // by stellRegionColor, plus a brighter outline on top.
+    const onRegions = stellRegions.filter((r) => r.on);
+    if (onRegions.length) {
+      const tris = [];
+      const triColor = [];
+      onRegions.forEach((r) => {
+        const rTris = stellCellTriangles(r);
+        rTris.forEach((t) => { tris.push(t); triColor.push(r); });
+      });
+      const positions = new Float32Array(tris.length * 9);
+      const colorsArr = new Float32Array(tris.length * 9);
+      const tmp = new THREE.Color();
+      let p = 0;
+      tris.forEach(([a, b, c], ti) => {
+        positions[p++] = a.x; positions[p++] = a.y; positions[p++] = a.z;
+        positions[p++] = b.x; positions[p++] = b.y; positions[p++] = b.z;
+        positions[p++] = c.x; positions[p++] = c.y; positions[p++] = c.z;
+        tmp.set(stellRegionColor(triColor[ti]));
+        for (let k = 0; k < 9; k += 3) {
+          colorsArr[ti * 9 + k] = tmp.r;
+          colorsArr[ti * 9 + k + 1] = tmp.g;
+          colorsArr[ti * 9 + k + 2] = tmp.b;
+        }
+      });
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute("color", new THREE.BufferAttribute(colorsArr, 3));
+      geo.computeVertexNormals();
+      const material = faceMaterial();
+      material.vertexColors = true;
+      material.color.setHex(0xffffff);
+      const mesh = new THREE.Mesh(geo, material);
+      shapeGroup.add(mesh);
+      stellObjects.push(mesh);
+
+      const onPts = [];
+      onRegions.forEach((r) => {
+        if (!r.locked) onPts.push(...stellCellEdgePoints(r));
+      });
+      // each stellated face is ONE face: outline just its outer boundary,
+      // not the seams between the cells it was made from
+      stellMergeGroups.forEach((group) => {
+        const loop2D = mergeFaceCellGroup(group);
+        if (loop2D.length < 3) return;
+        const loop3D = loop2D.map((q) => stellTo3D(q, group[0].plane));
+        for (let i = 0; i < loop3D.length; i++) onPts.push(loop3D[i], loop3D[(i + 1) % loop3D.length]);
+      });
+      const onLines = new THREE.LineSegments(
+        stellLineGeometry(onPts),
+        new THREE.LineBasicMaterial({ color: 0x9fd3ff })
+      );
+      shapeGroup.add(onLines);
+      stellObjects.push(onLines);
+    }
+
+    // The focused region - always one of the toggleable (original, on)
+    // ones - gets a glowing outline so Space's target is unmistakable:
+    // a soft, slightly larger halo (additive-blended, so it brightens
+    // rather than just overlapping) behind a sharp outline on top. Both
+    // materials are pulsed each frame in animate() for a genuine glow
+    // rather than a flat highlight colour.
+    stellGlowMaterials = [];
+    if (stellFocused) {
+      // Outline the whole face that Space will pop (its merged outer
+      // boundary), not just the one cell used to represent it.
+      const outline = stellFootprint(stellFocused.face);
+      const loop2D = outline.length ? mergeFaceCellGroup(outline) : [];
+      let edgePts;
+      if (loop2D.length >= 3) {
+        const loop3D = loop2D.map((q) => stellTo3D(q, stellFocused.plane));
+        edgePts = [];
+        for (let i = 0; i < loop3D.length; i++) edgePts.push(loop3D[i], loop3D[(i + 1) % loop3D.length]);
+      } else {
+        edgePts = stellCellEdgePoints(stellFocused);
+      }
+      const centroid = new THREE.Vector3();
+      edgePts.forEach((p) => centroid.add(p));
+      centroid.divideScalar(edgePts.length);
+
+      const haloPts = edgePts.map((p) =>
+        centroid.clone().add(p.clone().sub(centroid).multiplyScalar(1.12))
+      );
+      const haloMat = new THREE.LineBasicMaterial({
+        color: highlightColorHex,
+        transparent: true,
+        opacity: 0.45,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const halo = new THREE.LineSegments(stellLineGeometry(haloPts), haloMat);
+      shapeGroup.add(halo);
+      stellObjects.push(halo);
+      stellGlowMaterials.push(haloMat);
+
+      const sharpMat = new THREE.LineBasicMaterial({
+        color: highlightColorHex,
+        transparent: true,
+        opacity: 1,
+      });
+      const sharp = new THREE.LineSegments(stellLineGeometry(edgePts), sharpMat);
+      shapeGroup.add(sharp);
+      stellObjects.push(sharp);
+      stellGlowMaterials.push(sharpMat);
+    }
+  }
+
+  function stellOnRegions() {
+    return stellRegions ? stellRegions.filter((r) => r.on) : [];
+  }
+  // Only regions that are still their face's original, untouched state
+  // can be focused/toggled - a region added this session is locked in
+  // until the whole stellation is applied, so chaining has to go through
+  // Apply + a fresh Stellation Map rather than drilling in forever.
+  function stellFootprint(face) {
+    return stellRegions
+      ? stellRegions.filter((r) => r.face === face && r.on && r.isOriginal && !r.addedThisSession && !r.locked)
+      : [];
+  }
+  // Navigation and toggling work a whole face at a time: a face that has
+  // already been stellated once covers several cells, and popping it
+  // again has to grow that entire outline, not one cell of it. So each
+  // face with an untouched outline is represented by its first cell.
+  function stellNavigableRegions() {
+    if (!stellRegions) return [];
+    const seen = new Set();
+    const out = [];
+    stellRegions.forEach((r) => {
+      if (r.on && r.isOriginal && !r.addedThisSession && !r.locked && !seen.has(r.face)) {
+        seen.add(r.face);
+        out.push(r);
+      }
+    });
+    return out;
+  }
+
+  function updateStellLabel() {
+    const navList = stellNavigableRegions();
+    if (!stellRegions || navList.length === 0) {
+      stellLabel.textContent = "No toggleable faces left \u00b7 Apply to continue";
+      return;
+    }
+    const pos = stellFocused ? navList.indexOf(stellFocused) : -1;
+    stellLabel.textContent =
+      "Face " + (pos + 1) + " / " + navList.length + " toggleable \u00b7 face " +
+      (stellFocused ? stellFocused.face + 1 : "?");
+  }
+
+  function closeStellationPanel(restoreView) {
+    if (!stellActive) return;
+    stellActive = false;
+    stellRegions = null;
+    stellFocused = null;
+    stellOriginalColors = null;
+    stellMergeGroups = [];
+    clearStellObjects();
+    stellPanel.classList.add("hidden");
+    stellMapBtn.classList.remove("active");
+    if (restoreView) renderCurrentShape();
+  }
+
+  stellMapBtn.addEventListener("click", () => {
+    if (stellActive) {
+      closeStellationPanel(true);
+      return;
+    }
+    if (mode === "custom") {
+      infoDiv.textContent = "Exit reorder mode before mapping stellations";
+      return;
+    }
+    closeTruncationPanel(true);
+    setPainting(false);
+
+    const shape = currentPolygonShape();
+    if (!shape || shape.faces.length === 0) return;
+
+    const regions = computeStellationRegions(
+      cleanedVertices(shape.verts, shape.faces),
+      shape.faces
+    );
+    if (regions.length === 0) {
+      infoDiv.textContent = "Couldn't build a stellation map for this shape";
+      return;
+    }
+    regions.forEach((r) => {
+      r.on = r.isOriginal;
+      r.addedThisSession = false;
+      r.locked = false;
+    });
+    stellOriginalColors = currentFacePolygons ? faceColors.slice() : null;
+    stellMergeGroups = [];
+
+    stellRegions = regions;
+    stellRegions = regions;
+    stellFocused = stellNavigableRegions()[0] || regions[0];
+    stellActive = true;
+    setFaceGeometry(null);
+    stellPanel.classList.remove("hidden");
+    stellMapBtn.classList.add("active");
+    updateStellLabel();
+    renderStellationView();
+  });
+
+  stellCancel.addEventListener("click", () => closeStellationPanel(true));
+
+  // The groups to build the final shape from: each toggle's merge group
+  // (its vacated cell plus whatever it revealed, becoming one face),
+  // plus every untouched original that's still on as its own singleton
+  // group/face.
+  function stellBuildGroups() {
+    const consumed = new Set();
+    const groups = stellMergeGroups.map((g) => {
+      g.forEach((r) => consumed.add(r));
+      return g;
+    });
+    const byFace = new Map();
+    stellRegions
+      .filter((r) => r.on && !consumed.has(r))
+      .forEach((r) => {
+        if (!byFace.has(r.face)) byFace.set(r.face, []);
+        byFace.get(r.face).push(r);
+      });
+    byFace.forEach((cells) => groups.push(cells));
+    return groups;
+  }
+
+  stellApply.addEventListener("click", () => {
+    if (!stellActive) return;
+    const groups = stellBuildGroups();
+    if (groups.length === 0) {
+      infoDiv.textContent = "Turn at least one region on before applying";
+      return;
+    }
+    const groupColors = groups.map((g) => {
+      if (g.some((r) => r.addedThisSession)) return paintColor;
+      return (stellOriginalColors && stellOriginalColors[g[0].face]) || null;
+    });
+    const result = buildShapeFromRegions(groups, groupColors);
+    if (result.faces.length === 0) return;
+    // Welding and snapping nudge corners by a hair; pull every face
+    // back onto a consistent plane so error can't build up pass to pass.
+    result.vertices = cleanedVertices(result.vertices, result.faces);
+    closeStellationPanel(false);
+    const pruned = pruneUnusedVertices(result.vertices, result.faces);
+    applyCustomPolyhedron(pruned.vertices, pruned.faces, null, result.colors);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (!stellActive || !stellRegions) return;
+    const navList = stellNavigableRegions();
+    if (navList.length === 0) return;
+
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      const i = stellFocused ? navList.indexOf(stellFocused) : -1;
+      stellFocused = navList[(i + 1) % navList.length];
+      updateStellLabel();
+      renderStellationView();
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const i = stellFocused ? navList.indexOf(stellFocused) : 0;
+      stellFocused = navList[(i - 1 + navList.length) % navList.length];
+      updateStellLabel();
+      renderStellationView();
+    } else if (e.code === "Space") {
+      e.preventDefault();
+      // Pressing Space on a face grows it outward: the face KEEPS its own
+      // cells and gains the neighbouring cells (within that same face's
+      // own diagram) that surround it, and the two are one face from then
+      // on (e.g. a pentagon plus its 5 revealed tips is one pentagram
+      // face). That merged face is locked - not focusable again - until
+      // the stellation is applied, so you grow each face one shell per
+      // session. Recording the cells as one group is also what makes
+      // them a single face at Apply, which later operations like the dual
+      // depend on for correct face/vertex counts.
+      if (!stellFocused || !navList.includes(stellFocused)) return;
+      const outline = stellFootprint(stellFocused.face);
+      const prevIndex = navList.indexOf(stellFocused);
+      // The whole shell around this face's outline has to be finite: a
+      // cell that runs off to infinity can't be part of a polyhedron, and
+      // revealing only some of the ring leaves a lopsided, unclosed shape.
+      const revealedSet = new Set();
+      let runsOffToInfinity = false;
+      outline.forEach((r) => {
+        findBorderingRegions(r).forEach((n) => {
+          if (n.isOriginal || n.on) return;
+          if (n.unbounded) runsOffToInfinity = true;
+          else revealedSet.add(n);
+        });
+      });
+      if (runsOffToInfinity || revealedSet.size === 0) {
+        infoDiv.textContent = "This face can't be stellated further - part of what lies beyond it runs off to infinity";
+        return;
+      }
+      const revealed = Array.from(revealedSet);
+      revealed.forEach((n) => {
+        n.on = true;
+        n.addedThisSession = true;
+        n.locked = true;
+      });
+      outline.forEach((r) => (r.locked = true));
+      stellMergeGroups.push([...outline, ...revealed]);
+
+      const stillNavigable = stellNavigableRegions();
+      stellFocused =
+        stillNavigable[Math.min(prevIndex, stillNavigable.length - 1)] || null;
+      updateStellLabel();
+      renderStellationView();
+    }
+  });
+
+  // ---------------------------------------------------------------
+  // Face painting: pick a colour on the left, click a face to apply it.
+  // A named solid only has triangles, so the first paint converts it to a
+  // polygon shape (a cube gets 6 square faces) - painting whole faces.
+  // ---------------------------------------------------------------
+  const colorInput = document.getElementById("colorInput");
+  const hexInput = document.getElementById("hexInput");
+  const recentBox = document.getElementById("recentColors");
+  const paintToggle = document.getElementById("paintToggle");
+  const resetColorsBtn = document.getElementById("resetColorsBtn");
+
+  function isHexColor(c) {
+    return typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c);
+  }
+
+  // The last 8 colours actually used (painted, or given to a new face).
+  let recentColors = [];
+  try {
+    const saved = JSON.parse(localStorage.getItem("recentColors") || "[]");
+    if (Array.isArray(saved)) recentColors = saved.filter(isHexColor).slice(0, 8);
+  } catch (err) { /* storage unavailable - recents just won't persist */ }
+
+  function renderRecents() {
+    recentBox.innerHTML = "";
+    recentColors.forEach((hex) => {
+      const b = document.createElement("button");
+      b.style.background = hex;
+      b.title = hex;
+      b.classList.toggle("selected", hex === paintColor);
+      b.addEventListener("click", () => {
+        setPaintColor(hex);
+        rememberColor(hex);
+      });
+      recentBox.appendChild(b);
+    });
+  }
+
+  function rememberColor(hex) {
+    hex = hex.toLowerCase();
+    recentColors = [hex, ...recentColors.filter((c) => c !== hex)].slice(0, 8);
+    try { localStorage.setItem("recentColors", JSON.stringify(recentColors)); } catch (err) { /* ignore */ }
+    renderRecents();
+  }
+
+  function setPainting(on) {
+    painting = on;
+    paintToggle.classList.toggle("active", on);
+    paintToggle.textContent = on ? "Painting: click a face" : "Paint faces";
+    document.body.classList.toggle("painting", on);
+  }
+
+  function setPaintColor(hex) {
+    paintColor = hex.toLowerCase();
+    colorInput.value = paintColor;
+    hexInput.value = paintColor;
+    renderRecents();
+    if (truncating) updateTruncationPreview(); // corner faces use the selected colour
+    else if (mode !== "custom") setPainting(true); // picking a colour means you want to paint
+  }
+
+  colorInput.addEventListener("input", () => setPaintColor(colorInput.value));
+  colorInput.addEventListener("change", () => rememberColor(colorInput.value));
+  hexInput.addEventListener("change", () => {
+    let v = hexInput.value.trim();
+    if (!v.startsWith("#")) v = "#" + v;
+    if (/^#[0-9a-f]{3}$/i.test(v)) v = "#" + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+    if (isHexColor(v)) {
+      setPaintColor(v);
+      rememberColor(v);
+    } else {
+      hexInput.value = paintColor;
+    }
+  });
+  paintToggle.addEventListener("click", () => setPainting(!painting));
+  document.querySelectorAll(".sectionHeader").forEach((header) => {
+    const chevron = header.querySelector(".chevron");
+    const body = document.getElementById(header.dataset.target);
+    header.addEventListener("click", () => {
+      const collapsed = body.classList.toggle("hidden");
+      chevron.innerHTML = collapsed ? "&#9656;" : "&#9662;";
+    });
+  });
+
+  resetColorsBtn.addEventListener("click", () => {
+    if (!currentFacePolygons || !faceColors.some((c) => c)) return;
+    closeTruncationPanel(false);
+    closeStellationPanel(false);
+    faceColors = currentFacePolygons.map(() => null);
+    renderCurrentShape();
+    pushHistory();
+  });
+
+  function materializeNamedSolid() {
+    const shape = currentPolygonShape();
+    if (!shape || shape.faces.length === 0) return false;
+    currentFacePolygons = normalizeFaceWinding(currentVerts, shape.faces);
+    faceColors = currentFacePolygons.map(() => null);
+    currentSolidName = null;
+    currentSolidScale = 1;
+    dualCentre = null;
+    setActiveSolidButton(null);
+    renderCurrentShape();
+    return true;
+  }
+
+  function tryPaintFaceAt(clientX, clientY) {
+    if (mode === "custom" || truncating || stellActive) return;
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouseNDC.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    mouseNDC.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouseNDC, camera);
+    scene.updateMatrixWorld(true);
+
+    let mesh = faceMeshObjects.find((o) => o.isMesh);
+    if (!mesh || raycaster.intersectObject(mesh).length === 0) return;
+
+    if (!currentFacePolygons) {
+      if (!materializeNamedSolid()) return;
+      scene.updateMatri!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -592,7 +4565,29 @@
     faceMeshObjects.push(edges);
   }
 
-  function reapplyFaceMaterialSettings() {
+  function reapplyFaceMxWorld(true);
+      mesh = faceMeshObjects.find((o) => o.isMesh);
+      if (!mesh) return;
+    }
+
+    const hits = raycaster.intersectObject(mesh);
+    if (hits.length === 0) return;
+    const fi = mesh.geometry.userData.triFace[hits[0].faceIndex];
+    if (fi === undefined || faceColors[fi] === paintColor) return;
+    faceColors[fi] = paintColor;
+    rememberColor(paintColor);
+    renderCurrentShape();
+    pushHistory();
+  }
+
+  setPaintColor(paintColor);
+  setPainting(false);
+
+  // Start with a cube
+  loadSolid("cube");
+</script>
+</body>
+</html>aterialSettings() {
     faceMeshObjects.forEach((obj) => {
       if (obj.isMesh) {
         obj.material.transparent = settings.transparent;
@@ -1950,5 +5945,5 @@
   // Start with a cube
   loadSolid("cube");
 </script>
-</body>
-</html>
+</bo
+
