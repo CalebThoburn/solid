@@ -76,24 +76,37 @@ function truncatePolyhedron(vertices, rawFaces, t) {
         "needs a closed shape where every edge is shared by exactly two faces",
     };
   }
+  const rings = [];
+  for (let v = 0; v < vertices.length; v++) {
+    rings[v] = cornerRing(v, faces);
+    if (rings[v] === null)
+      return {
+        error: "the faces around one of the corners don't form a closed ring",
+      };
+  }
   // t is how far along each edge (as a fraction of it) the cut lands,
   // from each end: 0..0.5 truncates, 0.5 rectifies, 0.5..1 hypertruncates
   // (the cuts from the two ends cross over), past 1 quasitruncates, and
   // below 0 antitruncates (the cut lands outside, past the corner).
+  //
+  // Every depth is measured towards the rectified point of each edge
+  // (where the cuts from both ends meet - its midpoint on a regular
+  // solid): the cut from corner a lands 2t of the way from a to it. So
+  // each corner's cut is the rectified corner face scaled about that
+  // corner by 2t - exactly flat at every depth - and the shape slides
+  // smoothly into rectification instead of jumping there.
   const rectified = Math.abs(t - 0.5) < 1e-9;
-  const frac = rectified ? 0.5 : t;
+  const meet = rectifiedEdgePoints(vertices, faces, rings);
 
   const points = [];
-  const pointEdge = []; // the edge each point sits on, and which corners' cuts it belongs to
   const index = new Map();
   function cut(a, b) {
-    const key = rectified ? (a < b ? a + "_" + b : b + "_" + a) : a + ">" + b;
+    const edge = a < b ? a + "_" + b : b + "_" + a;
+    const key = rectified ? edge : a + ">" + b;
     if (index.has(key)) return index.get(key);
-    const pa = vertices[a];
-    const pb = vertices[b];
     const idx = points.length;
-    points.push(pa.clone().add(pb.clone().sub(pa).multiplyScalar(frac)));
-    pointEdge.push({ a, b, corners: rectified ? [a, b] : [a] });
+    const pa = vertices[a];
+    points.push(pa.clone().add(meet.get(edge).clone().sub(pa).multiplyScalar(2 * t)));
     index.set(key, idx);
     return idx;
   }
@@ -116,28 +129,55 @@ function truncatePolyhedron(vertices, rawFaces, t) {
       origin.push(fi);
     }
   });
-
-  const cornerFaces = new Map();
   for (let v = 0; v < vertices.length; v++) {
-    const ring = cornerRing(v, faces);
-    if (ring === null)
-      return {
-        error: "the faces around one of the corners don't form a closed ring",
-      };
-    if (ring.length >= 3) {
-      const face = ring.map((u) => cut(v, u));
-      newFaces.push(face);
+    if (rings[v].length >= 3) {
+      newFaces.push(rings[v].map((u) => cut(v, u)));
       origin.push(-1);
-      cornerFaces.set(v, face);
     }
   }
-  flattenCornerCuts(vertices, points, pointEdge, cornerFaces, rectified);
 
   return {
     vertices: points,
     faces: normalizeFaceWinding(points, newFaces),
     origin,
   };
+}
+
+// The rectified point of every edge (key "a_b", a < b): where the cuts
+// from its two corners meet so that every corner's cut is flat - its
+// midpoint on a regular solid (see flattenCornerCuts). Remembered per
+// shape, since the truncation slider asks for it on every step.
+const rectifiedPointCache = new WeakMap(); // vertices -> { faces, points }
+function rectifiedEdgePoints(vertices, faces, rings) {
+  const key = faces.map((f) => f.join(",")).join(";");
+  const cached = rectifiedPointCache.get(vertices);
+  if (cached && cached.faces === key) return cached.points;
+
+  const points = [];
+  const pointEdge = [];
+  const index = new Map();
+  const cut = (a, b) => {
+    const edge = a < b ? a + "_" + b : b + "_" + a;
+    if (index.has(edge)) return index.get(edge);
+    const idx = points.length;
+    points.push(vertices[a].clone().lerp(vertices[b], 0.5));
+    pointEdge.push({ a, b, corners: [a, b] });
+    index.set(edge, idx);
+    return idx;
+  };
+  faces.forEach((poly) =>
+    poly.forEach((a, i) => cut(a, poly[(i + 1) % poly.length])),
+  );
+  const cornerFaces = new Map();
+  rings.forEach((ring, v) => {
+    if (ring && ring.length >= 3) cornerFaces.set(v, ring.map((u) => cut(v, u)));
+  });
+  flattenCornerCuts(vertices, points, pointEdge, cornerFaces, true);
+
+  const result = new Map();
+  index.forEach((idx, edge) => result.set(edge, points[idx]));
+  rectifiedPointCache.set(vertices, { faces: key, points: result });
+  return result;
 }
 
 // Cutting every edge at the same fraction only gives flat new corner
@@ -149,9 +189,10 @@ function truncatePolyhedron(vertices, rawFaces, t) {
 // each corner is cut by a plane instead: fit one through its cut
 // points, then slide each point along its own edge onto that plane.
 // Points stay on the original edges, so the original faces keep their
-// exact planes. For truncation one pass is exact; for rectification
-// each point is shared by the cuts at both ends of its edge, so the
-// two are balanced over repeated passes until they agree.
+// exact planes. For rectification each point is shared by the cuts at
+// both ends of its edge, so the two are balanced over repeated passes
+// until they agree; other depths are scaled from that (see
+// truncatePolyhedron).
 function flattenCornerCuts(vertices, points, pointEdge, cornerFaces, rectified) {
   let size = 0;
   vertices.forEach((v) => (size = Math.max(size, v.length())));
