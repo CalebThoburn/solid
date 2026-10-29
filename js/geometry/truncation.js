@@ -68,6 +68,7 @@ function truncatePolyhedron(vertices, rawFaces, t) {
   const frac = rectified ? 0.5 : t;
 
   const points = [];
+  const pointEdge = []; // the edge each point sits on, and which corners' cuts it belongs to
   const index = new Map();
   function cut(a, b) {
     const key = rectified ? (a < b ? a + "_" + b : b + "_" + a) : a + ">" + b;
@@ -76,6 +77,7 @@ function truncatePolyhedron(vertices, rawFaces, t) {
     const pb = vertices[b];
     const idx = points.length;
     points.push(pa.clone().add(pb.clone().sub(pa).multiplyScalar(frac)));
+    pointEdge.push({ a, b, corners: rectified ? [a, b] : [a] });
     index.set(key, idx);
     return idx;
   }
@@ -99,6 +101,7 @@ function truncatePolyhedron(vertices, rawFaces, t) {
     }
   });
 
+  const cornerFaces = new Map();
   for (let v = 0; v < vertices.length; v++) {
     const ring = vertexRing(v, faces, edgeMap);
     if (ring === null)
@@ -106,16 +109,66 @@ function truncatePolyhedron(vertices, rawFaces, t) {
         error: "the faces around one of the corners don't form a closed ring",
       };
     if (ring.length >= 3) {
-      newFaces.push(ring.map((u) => cut(v, u)));
+      const face = ring.map((u) => cut(v, u));
+      newFaces.push(face);
       origin.push(-1);
+      cornerFaces.set(v, face);
     }
   }
+  flattenCornerCuts(vertices, points, pointEdge, cornerFaces, rectified);
 
   return {
     vertices: points,
     faces: normalizeFaceWinding(points, newFaces),
     origin,
   };
+}
+
+// Cutting every edge at the same fraction only gives flat new corner
+// faces when each corner's neighbours are evenly placed around it (as
+// on the regular and uniform solids). Elsewhere - e.g. a corner of a
+// triakis icosahedron, whose 10 neighbours alternate between two
+// distances - the cut points don't lie in one plane, and a bent face
+// breaks anything that needs a face's plane (stellation, the dual). So
+// each corner is cut by a plane instead: fit one through its cut
+// points, then slide each point along its own edge onto that plane.
+// Points stay on the original edges, so the original faces keep their
+// exact planes. For truncation one pass is exact; for rectification
+// each point is shared by the cuts at both ends of its edge, so the
+// two are balanced over repeated passes until they agree.
+function flattenCornerCuts(vertices, points, pointEdge, cornerFaces, rectified) {
+  let size = 0;
+  vertices.forEach((v) => (size = Math.max(size, v.length())));
+  const tol = Math.max(size * 1e-12, 1e-14);
+  const passes = rectified ? 500 : 1;
+  for (let pass = 0; pass < passes; pass++) {
+    if (maxFacePlanarity(points, Array.from(cornerFaces.values())) < tol)
+      return;
+    const planes = new Map();
+    cornerFaces.forEach((face, v) => {
+      const n = newellNormal(face, points);
+      if (n.lengthSq() < 1e-18) return;
+      n.normalize();
+      planes.set(v, { n, d: n.dot(faceCentroidOf(face, points)) });
+    });
+    pointEdge.forEach(({ a, b, corners }, i) => {
+      const start = vertices[a];
+      const dir = vertices[b].clone().sub(start);
+      // where along the edge (0 = a, 1 = b) best meets the corner planes
+      let num = 0,
+        den = 0;
+      corners.forEach((v) => {
+        const pl = planes.get(v);
+        if (!pl) return;
+        const along = pl.n.dot(dir);
+        num += (pl.d - pl.n.dot(start)) * along;
+        den += along * along;
+      });
+      if (den < 1e-18) return;
+      const s = Math.min(Math.max(num / den, 0.001), 0.999);
+      points[i] = start.clone().addScaledVector(dir, s);
+    });
+  }
 }
 
 // The named solids only carry triangles; merge coplanar triangles back

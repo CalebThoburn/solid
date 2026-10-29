@@ -93,20 +93,40 @@ function stellPointInside(poly, p, eps) {
   }
   return true;
 }
-// Incrementally slice a big bounding square by every line, keeping
-// every resulting piece - this is exactly the arrangement's cells.
+// Slice a big bounding square by every line, keeping every resulting
+// piece - this is exactly the arrangement's cells. Done by recursive
+// splitting: a piece only needs testing against the lines that crossed
+// the piece it was cut from (a line missing a piece misses every part
+// of it), so each line is only checked near where it actually runs.
+function stellLineCrosses(cell, p1, p2, eps) {
+  let above = false,
+    below = false;
+  for (const q of cell) {
+    const side = stellSide(q, p1, p2, eps);
+    if (side > 0) above = true;
+    else if (side < 0) below = true;
+    if (above && below) return true;
+  }
+  return false;
+}
 function stellBuildCells(boundBox, lines, eps) {
-  let cells = [boundBox];
-  lines.forEach(([p1, p2]) => {
-    const next = [];
-    cells.forEach((cell) => {
-      const pos = stellClip(cell, p1, p2, true, eps);
-      const neg = stellClip(cell, p1, p2, false, eps);
-      if (pos.length >= 3 && stellPolyArea(pos) > eps * eps) next.push(pos);
-      if (neg.length >= 3 && stellPolyArea(neg) > eps * eps) next.push(neg);
-    });
-    cells = next;
-  });
+  const cells = [];
+  function split(cell, candidates) {
+    const crossing = candidates.filter(([p1, p2]) =>
+      stellLineCrosses(cell, p1, p2, eps),
+    );
+    if (crossing.length === 0) {
+      cells.push(cell);
+      return;
+    }
+    const [p1, p2] = crossing[0];
+    const rest = crossing.slice(1);
+    const pos = stellClip(cell, p1, p2, true, eps);
+    const neg = stellClip(cell, p1, p2, false, eps);
+    if (pos.length >= 3 && stellPolyArea(pos) > eps * eps) split(pos, rest);
+    if (neg.length >= 3 && stellPolyArea(neg) > eps * eps) split(neg, rest);
+  }
+  split(boundBox, lines);
   return cells;
 }
 
@@ -164,11 +184,9 @@ function computeStellationRegions(vertices, rawFacePolygons) {
   function edgesOf(poly) {
     return poly.map((p, i) => [p, poly[(i + 1) % poly.length]]);
   }
-  const regions = [];
-  facePolygons.forEach((poly, fi) => {
+  // The lines every other face's plane draws across face fi's plane.
+  function stellFaceLines(fi) {
     const planeF = planes[fi];
-    if (!planeF) return;
-
     const lines = [];
     planes.forEach((planeG, gi) => {
       if (gi === fi || !planeG) return;
@@ -189,8 +207,74 @@ function computeStellationRegions(vertices, rawFacePolygons) {
       }
       lines.push([p1, p2]);
     });
+    return lines;
+  }
 
-    const rawCells = stellBuildCells(boundBox, lines, eps);
+  // Faces a rotation of the shape carries onto each other have the same
+  // diagram, just turned, so each type of face's diagram is cut once
+  // and carried onto the rest (a big saving: a rectified triakis
+  // icosahedron's 92 faces are only 2 types).
+  const rotations = polyhedronRotations(vertices, facePolygons);
+  const builtFaces = new Map(); // face -> { rawCells, rawUnbounded }
+  function copyFromAlikeFace(fi) {
+    for (const g of rotations) {
+      for (const [r, built] of builtFaces) {
+        if (g.faceMap[r] !== fi) continue;
+        const from = planes[r],
+          to = planes[fi];
+        const carry = (x, y) => {
+          const p = from.centroid
+            .clone()
+            .addScaledVector(from.u, x)
+            .addScaledVector(from.v, y)
+            .sub(g.centre)
+            .applyMatrix3(g.matrix)
+            .add(g.centre)
+            .sub(to.centroid);
+          return { x: p.dot(to.u), y: p.dot(to.v) };
+        };
+        const o = carry(0, 0),
+          ex = carry(1, 0),
+          ey = carry(0, 1);
+        const a = ex.x - o.x,
+          b = ey.x - o.x,
+          c = ex.y - o.y,
+          d = ey.y - o.y;
+        const flip = a * d - b * c < 0; // keep every cell wound the same way
+        const rawCells = built.rawCells.map((cell) => {
+          const out = cell.map((q) => ({
+            x: o.x + a * q.x + b * q.y,
+            y: o.y + c * q.x + d * q.y,
+          }));
+          return flip ? out.reverse() : out;
+        });
+        return { rawCells, rawUnbounded: built.rawUnbounded };
+      }
+    }
+    return null;
+  }
+
+  const regions = [];
+  facePolygons.forEach((poly, fi) => {
+    const planeF = planes[fi];
+    if (!planeF) return;
+
+    let built = copyFromAlikeFace(fi);
+    if (!built) {
+      const rawCells = stellBuildCells(boundBox, stellFaceLines(fi), eps);
+      // A cell touching the edge of the bounding square runs off to
+      // infinity (it only stops there because we cut it off).
+      const rawUnbounded = rawCells.map((raw) =>
+        raw.some(
+          (q) =>
+            Math.abs(Math.abs(q.x) - S) < eps * 4 ||
+            Math.abs(Math.abs(q.y) - S) < eps * 4,
+        ),
+      );
+      built = { rawCells, rawUnbounded };
+    }
+    builtFaces.set(fi, built);
+    const { rawCells, rawUnbounded } = built;
 
     // Real shapes are never perfectly exact (coordinates get rounded
     // when exported/imported, and solids are stored to 4 decimals), so
@@ -229,14 +313,10 @@ function computeStellationRegions(vertices, rawFacePolygons) {
     }
     const cells = [];
     const cellUnbounded = [];
-    rawCells.forEach((raw) => {
+    rawCells.forEach((raw, ri) => {
       // Decided from the raw corners, before snapping can nudge them
       // off the bounding square's edge.
-      const touchesBox = raw.some(
-        (q) =>
-          Math.abs(Math.abs(q.x) - S) < eps * 4 ||
-          Math.abs(Math.abs(q.y) - S) < eps * 4,
-      );
+      const touchesBox = rawUnbounded[ri];
       const snapped = [];
       raw.forEach((q) => {
         const rep = snapPoint(q);
